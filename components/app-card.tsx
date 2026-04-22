@@ -1,0 +1,215 @@
+"use client"
+
+import {
+  Database,
+  Cloud,
+  Cpu,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Activity,
+  ExternalLink,
+} from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { StatusBadge } from "./status-badge"
+import { AppPulse } from "@/lib/types"
+import { cn } from "@/lib/utils"
+
+interface AppCardProps {
+  app: AppPulse
+  onClick: () => void
+}
+
+const TrendIcon = ({ trend }: { trend?: "up" | "down" | "stable" }) => {
+  if (trend === "up") return <TrendingUp className="w-3 h-3 text-emerald-400" />
+  if (trend === "down") return <TrendingDown className="w-3 h-3 text-red-400" />
+  return <Minus className="w-3 h-3 text-muted-foreground" />
+}
+
+function dbStatusTone(
+  s: AppPulse["infrastructure"]["db_status"],
+): "ok" | "warn" | "err" | "muted" {
+  if (s === "connected") return "ok"
+  if (s === "degraded") return "warn"
+  if (s === "disconnected") return "err"
+  return "muted"
+}
+
+function databaseDisplayName(db: AppPulse["infrastructure"]["database"]) {
+  if (db === "mongodb") return "MongoDB"
+  if (db === "postgres") return "PostgreSQL"
+  return null
+}
+
+export function AppCard({ app, onClick }: AppCardProps) {
+  const latencyColor =
+    app.metrics.latency_ms < 100
+      ? "text-emerald-400"
+      : app.metrics.latency_ms < 200
+        ? "text-amber-400"
+        : "text-red-400"
+
+  return (
+    <Card
+      className={cn(
+        "cursor-pointer transition-all duration-200 hover:border-primary/40 hover:bg-card/80",
+        "group relative overflow-hidden",
+        app.status === "degraded" && "border-amber-500/30",
+        app.status === "down" && "border-red-500/30",
+        app.status === "unavailable" && "border-border/80 opacity-90"
+      )}
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary text-2xl">
+              {app.icon}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-foreground">{app.name}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-1">{app.description}</p>
+              {app.appUrl ? (
+                <a
+                  href={app.appUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex max-w-full items-center gap-1 text-xs text-primary hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <span className="truncate">App (front)</span>
+                </a>
+              ) : null}
+            </div>
+          </div>
+          <StatusBadge status={app.status} />
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Technical Metrics */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <Activity className="w-4 h-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">Latency</p>
+              <p className={cn("text-sm font-mono font-semibold", latencyColor)}>
+                {app.metrics.latency_ms}ms
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <Database className="w-4 h-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">
+                {databaseDisplayName(app.infrastructure.database) ??
+                  "Base de datos (origen)"}
+              </p>
+              <p
+                className={cn(
+                  "text-sm font-medium capitalize",
+                  dbStatusTone(app.infrastructure.db_status) === "ok"
+                    ? "text-emerald-400"
+                    : dbStatusTone(app.infrastructure.db_status) === "warn"
+                      ? "text-amber-400"
+                      : dbStatusTone(app.infrastructure.db_status) === "err"
+                        ? "text-red-400"
+                        : "text-muted-foreground"
+                )}
+              >
+                {app.infrastructure.db_status === "unknown"
+                  ? "sin informar"
+                  : app.infrastructure.db_status}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Business KPIs */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Business KPIs
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {app.kpis.map((kpi, index) => (
+              <div key={index} className="text-center p-2 rounded-lg bg-secondary/30">
+                <div className="flex items-center justify-center gap-1">
+                  <span className="text-sm font-semibold text-foreground">{kpi.value}</span>
+                  <TrendIcon trend={kpi.trend} />
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{kpi.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Infrastructure Icons */}
+        <div className="flex items-center gap-2 pt-2 border-t border-border">
+          <p className="text-xs text-muted-foreground mr-auto">Infrastructure</p>
+          <div
+            className={cn(
+              "flex items-center justify-center w-6 h-6 rounded",
+              app.infrastructure.vercel ? "bg-primary/10" : "bg-secondary"
+            )}
+            title="Vercel"
+          >
+            <Cloud
+              className={cn(
+                "w-3.5 h-3.5",
+                app.infrastructure.vercel ? "text-primary" : "text-muted-foreground"
+              )}
+            />
+          </div>
+          <div
+            className={cn(
+              "flex items-center justify-center w-6 h-6 rounded",
+              app.infrastructure.ai_api ? "bg-primary/10" : "bg-secondary"
+            )}
+            title="AI API"
+          >
+            <Cpu
+              className={cn(
+                "w-3.5 h-3.5",
+                app.infrastructure.ai_api ? "text-primary" : "text-muted-foreground"
+              )}
+            />
+          </div>
+          <div
+            className={cn(
+              "flex items-center justify-center w-6 h-6 rounded",
+              app.infrastructure.db_status === "connected" ? "bg-primary/10" : "bg-secondary"
+            )}
+            title="Database"
+          >
+            <Database
+              className={cn(
+                "w-3.5 h-3.5",
+                dbStatusTone(app.infrastructure.db_status) === "ok"
+                  ? "text-primary"
+                  : dbStatusTone(app.infrastructure.db_status) === "warn"
+                    ? "text-amber-400"
+                    : dbStatusTone(app.infrastructure.db_status) === "err"
+                      ? "text-red-400"
+                      : "text-muted-foreground"
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Version */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>v{app.pulse_version}</span>
+          <span>
+            {new Date(app.last_updated).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

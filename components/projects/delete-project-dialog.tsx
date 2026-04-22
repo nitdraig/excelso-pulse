@@ -1,0 +1,94 @@
+"use client"
+
+import { useState } from "react"
+import { Loader2, Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+
+type DeleteProjectDialogProps = {
+  apiPathKey: string | null
+  projectName: string | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
+}
+
+export function DeleteProjectDialog({
+  apiPathKey,
+  projectName,
+  open,
+  onOpenChange,
+  onSuccess,
+}: DeleteProjectDialogProps) {
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleDelete() {
+    if (!apiPathKey) return
+    setError(null)
+    setPending(true)
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(apiPathKey)}`, {
+        method: "DELETE",
+      })
+      const data = (await res.json()) as { error?: string }
+      if (!res.ok) {
+        setError(data.error ?? "No se pudo eliminar.")
+        return
+      }
+      onOpenChange(false)
+      onSuccess?.()
+    } finally {
+      setPending(false)
+    }
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-destructive" />
+            ¿Eliminar origen?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <span>
+              Se borrará el registro{" "}
+              <strong className="text-foreground">{projectName ?? apiPathKey}</strong> en MongoDB, incluido el
+              token cifrado si existía.
+            </span>
+            {error ? (
+              <span className="block text-destructive text-sm">{error}</span>
+            ) : null}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={pending}
+            onClick={() => void handleDelete()}
+          >
+            {pending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Eliminando…
+              </>
+            ) : (
+              "Eliminar"
+            )}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
