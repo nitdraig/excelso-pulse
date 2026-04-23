@@ -1,14 +1,7 @@
 {
   "name": "excelso-pulse-express",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Health & Business Pulse for Express: protected JSON pulse, pluggable probes (MongoDB by default).",
-  "license": "ISC",
-  "author": "Agustin Avellaneda",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-org/express-base.git",
-    "directory": "npm/excelso-pulse-express"
-  },
   "keywords": [
     "express",
     "health",
@@ -17,8 +10,18 @@
     "mongodb",
     "observability"
   ],
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "homepage": "https://github.com/your-org/express-base#readme",
+  "bugs": {
+    "url": "https://github.com/your-org/express-base/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/express-base.git",
+    "directory": "npm/excelso-pulse-express"
+  },
+  "license": "ISC",
+  "author": "Agustin Avellaneda",
+  "type": "commonjs",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -26,6 +29,8 @@
       "import": "./dist/index.js"
     }
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "README.md",
@@ -36,15 +41,8 @@
     "build": "rimraf dist && tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build"
   },
-  "engines": {
-    "node": ">=18"
-  },
   "dependencies": {
     "express-rate-limit": "^7.1.5"
-  },
-  "peerDependencies": {
-    "express": "^4.18.0 || ^4.21.0",
-    "mongoose": "^8.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
@@ -53,5 +51,12 @@
     "mongoose": "^8.9.2",
     "rimraf": "^5.0.0",
     "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "express": "^4.18.0 || ^4.21.0",
+    "mongoose": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
