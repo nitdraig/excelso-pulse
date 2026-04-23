@@ -1,6 +1,6 @@
 # Excelso Pulse
 
-<img src="https://github.com/nitdraig/excelso-pulse/npm/public/web-app-manifest-512x512.png" alt="Logo Excelso Pulse" width="128" height="128">
+<img src="https://github.com/nitdraig/excelso-pulse/blob/main/npm/public/web-app-manifest-512x512.png" alt="Logo Excelso Pulse" width="128" height="128">
 
 **Excelso Pulse** es una aplicación web tipo centro de mando para el ecosistema Excelso. Agrega señales de salud y negocio desde varios backends de producto, guarda metadatos de proyectos y secretos cifrados en MongoDB, y muestra un panel unificado por usuario autenticado.
 
@@ -49,10 +49,10 @@
 
    Copia `web-app/.env.example` a `web-app/.env` y completa al menos:
 
-   | Variable | Uso |
-   |----------|-----|
-   | `MONGODB_URI` | Cadena de conexión a MongoDB (usuarios y proyectos). |
-   | `AUTH_SECRET` | Secreto de Auth.js (`npx auth secret`). |
+   | Variable                   | Uso                                                                                                                             |
+   | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+   | `MONGODB_URI`              | Cadena de conexión a MongoDB (usuarios y proyectos).                                                                            |
+   | `AUTH_SECRET`              | Secreto de Auth.js (`npx auth secret`).                                                                                         |
    | `PULSE_SECRETS_MASTER_KEY` | 64 caracteres hexadecimales (32 bytes); necesario para guardar tokens Bearer en base de datos. Ejemplo: `openssl rand -hex 32`. |
 
    Opciones del agregador: `PULSE_FETCH_TIMEOUT_MS`, `PULSE_ROUND_TIMEOUT_MS`, `PULSE_CACHE_TTL_MS`, `PULSE_RATE_LIMIT_*`, `PULSE_SOURCES`, `PULSE_MERGE_ENV_SOURCES`. Detalle en [`web-app/docs/pulse-aggregator.md`](web-app/docs/pulse-aggregator.md).
@@ -76,13 +76,13 @@
 
 Ejecuta estos comandos **dentro de `web-app/`** (tras `cd excelso-pulse/web-app`).
 
-| Comando | Descripción |
-|---------|-------------|
-| `npm run dev` | Servidor de desarrollo Next.js |
-| `npm run build` | Compilación de producción |
-| `npm run start` | Servidor de producción |
-| `npm run lint` | ESLint |
-| `npm run test` | Vitest (pruebas unitarias) |
+| Comando         | Descripción                    |
+| --------------- | ------------------------------ |
+| `npm run dev`   | Servidor de desarrollo Next.js |
+| `npm run build` | Compilación de producción      |
+| `npm run start` | Servidor de producción         |
+| `npm run lint`  | ESLint                         |
+| `npm run test`  | Vitest (pruebas unitarias)     |
 
 ## API (con sesión)
 
@@ -140,7 +140,6 @@ Más detalle: [`npm/README.es.md`](npm/README.es.md) (español) y [`npm/README.m
    ```
 
 4. **Ajustes opcionales**
-
    - `rateLimit`: por defecto ~60 peticiones/minuto por IP; pasa `false` para desactivarlo.
    - `probeTimeoutMs` / `collectionTimeoutMs`: timeouts de los probes y de toda la recolección (por defecto 150 ms / 300 ms en `collectPulse`).
    - `probes` / `getProbes`: sustituye el probe Mongo por tus propias comprobaciones.

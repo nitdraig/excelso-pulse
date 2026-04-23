@@ -1,6 +1,6 @@
 # excelso-pulse-express
 
-<img src="https://github.com/nitdraig/excelso-pulse/npm/public/web-app-manifest-512x512.png" alt="Excelso Pulse logo" width="128" height="128">
+<img src="https://github.com/nitdraig/excelso-pulse/blob/main/npm/public/web-app-manifest-512x512.png" alt="Excelso Pulse logo" width="128" height="128">
 
 > **Español:** [README.es.md](./README.es.md)
 

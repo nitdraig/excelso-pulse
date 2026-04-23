@@ -1,6 +1,6 @@
 # Excelso Pulse
 
-<img src="https://github.com/nitdraig/excelso-pulse/npm/public/web-app-manifest-512x512.png" alt="Excelso Pulse logo" width="128" height="128">
+<img src="https://github.com/nitdraig/excelso-pulse/blob/main/npm/public/web-app-manifest-512x512.png" alt="Excelso Pulse logo" width="128" height="128">
 
 **Excelso Pulse** is a command-center web app for the Excelso ecosystem. It aggregates health and business signals from multiple product backends, stores project metadata and encrypted secrets in MongoDB, and presents a unified dashboard per signed-in user.
 
@@ -138,7 +138,6 @@ More detail: [`npm/README.md`](npm/README.md) (English) and [`npm/README.es.md`]
    ```
 
 4. **Optional tuning**
-
    - `rateLimit`: default ~60 requests/minute per IP; pass `false` to disable.
    - `probeTimeoutMs` / `collectionTimeoutMs`: timeouts for infrastructure probes and the whole collection (defaults 150 ms / 300 ms in `collectPulse`).
    - `probes` / `getProbes`: replace the default Mongo probe with your own checks.
