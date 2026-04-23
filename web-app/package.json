@@ -1,5 +1,5 @@
 {
-  "name": "excelso-pulse",
+  "name": "excelso-pulse-web-app",
   "version": "1.0.0",
   "private": true,
   "description": "Excelso Pulse is a command center for the Excelso ecosystem",
@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/excelso/excelso-pulse"
   },
-  "homepage": "https://pulse.excelso.com",
+  "homepage": "https://pulse.excelso.xyz",
   "keywords": [
     "excelso",
     "pulse",

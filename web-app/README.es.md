@@ -4,12 +4,11 @@
 
 **Excelso Pulse** es una aplicación web tipo centro de mando para el ecosistema Excelso. Agrega señales de salud y negocio desde varios backends de producto, guarda metadatos de proyectos y secretos cifrados en MongoDB, y muestra un panel unificado por usuario autenticado.
 
-[Read in English](README.md) · [Versión detallada en español (`web-app/`)](web-app/README.es.md)
+[README en inglés (raíz)](../README.md) · [README en español (raíz)](../README.es.md)
 
 ## Estructura del monorepo
 
-- [`web-app/`](web-app/) — Aplicación **Next.js** (panel, Auth.js, registro en MongoDB, agregador pulse).
-- [`npm/`](npm/) — Paquete publicable **`excelso-pulse-express`**: router Express y `collectPulse()` para backends de producto que exponen `GET /internal/pulse`.
+Este directorio (**`web-app/`**) contiene la aplicación **Next.js** (panel, Auth.js, registro en MongoDB, agregador pulse). El paquete publicable para backends está en **[`../npm/`](../npm/)** (`excelso-pulse-express`): router Express y `collectPulse()` para exponer `GET /internal/pulse`.
 
 ## Funcionalidades
 
@@ -31,23 +30,24 @@
 
 ## Requisitos
 
-- Node.js 22+ (recomendado; revisa `engines` en `web-app/package.json` si existe)
+- Node.js 22+ (recomendado; revisa `engines` en `package.json` si existe)
 - Una instancia MongoDB (cadena de conexión)
 - `AUTH_SECRET` y `PULSE_SECRETS_MASTER_KEY` para un entorno similar a producción (ver abajo)
 
-## Puesta en marcha (app web)
+## Puesta en marcha (esta app)
 
-1. **Clonar e instalar**
+Desde la raíz del repositorio clonado:
+
+1. **Instalar**
 
    ```bash
-   git clone https://github.com/excelso/excelso-pulse.git
    cd excelso-pulse/web-app
    npm install
    ```
 
 2. **Variables de entorno**
 
-   Copia `web-app/.env.example` a `web-app/.env` y completa al menos:
+   Copia `.env.example` a `.env` en esta carpeta (`web-app/`) y completa al menos:
 
    | Variable | Uso |
    |----------|-----|
@@ -55,7 +55,7 @@
    | `AUTH_SECRET` | Secreto de Auth.js (`npx auth secret`). |
    | `PULSE_SECRETS_MASTER_KEY` | 64 caracteres hexadecimales (32 bytes); necesario para guardar tokens Bearer en base de datos. Ejemplo: `openssl rand -hex 32`. |
 
-   Opciones del agregador: `PULSE_FETCH_TIMEOUT_MS`, `PULSE_ROUND_TIMEOUT_MS`, `PULSE_CACHE_TTL_MS`, `PULSE_RATE_LIMIT_*`, `PULSE_SOURCES`, `PULSE_MERGE_ENV_SOURCES`. Detalle en [`web-app/docs/pulse-aggregator.md`](web-app/docs/pulse-aggregator.md).
+   Opciones del agregador: `PULSE_FETCH_TIMEOUT_MS`, `PULSE_ROUND_TIMEOUT_MS`, `PULSE_CACHE_TTL_MS`, `PULSE_RATE_LIMIT_*`, `PULSE_SOURCES`, `PULSE_MERGE_ENV_SOURCES`. Detalle en [`docs/pulse-aggregator.md`](docs/pulse-aggregator.md).
 
 3. **Desarrollo local**
 
@@ -73,8 +73,6 @@
    ```
 
 ## Scripts
-
-Ejecuta estos comandos **dentro de `web-app/`** (tras `cd excelso-pulse/web-app`).
 
 | Comando | Descripción |
 |---------|-------------|
@@ -97,9 +95,9 @@ Las respuestas no exponen el Bearer en claro ni detalles del cifrado.
 
 ## Paquete npm: `excelso-pulse-express`
 
-El código fuente está en [`npm/`](npm/). Implementa el JSON **Health & Business Pulse** (`pulse_version: "1"`) que agrega la app web, con comprobaciones opcionales de **MongoDB** en infraestructura y protección **Bearer** en el helper de Express.
+El código fuente está en [`../npm/`](../npm/). Implementa el JSON **Health & Business Pulse** (`pulse_version: "1"`) que esta app agrega, con comprobaciones opcionales de **MongoDB** en infraestructura y protección **Bearer** en el helper de Express.
 
-Más detalle: [`npm/README.es.md`](npm/README.es.md) (español) y [`npm/README.md`](npm/README.md) (inglés).
+Más detalle: [`../npm/README.es.md`](../npm/README.es.md) (español) y [`../npm/README.md`](../npm/README.md) (inglés).
 
 ### Paso a paso — backend Express
 
@@ -157,7 +155,7 @@ Más detalle: [`npm/README.es.md`](npm/README.es.md) (español) y [`npm/README.m
 
 1. **Instala** el mismo paquete (`excelso-pulse-express`); en este flujo **no** necesitas Express.
 2. **Llama** a `collectPulse({ productName, environment, aiContext, businessMetricsJson, probes, … })` y devuelve o registra el `PulsePayload`.
-3. **Protege la ruta tú mismo** en producción (el ejemplo en [`npm/README.md`](npm/README.md) no añade Bearer a un Route Handler público).
+3. **Protege la ruta tú mismo** en producción (el ejemplo en [`../npm/README.es.md`](../npm/README.es.md) no añade Bearer a un Route Handler público).
 
 ### Desarrollar o enlazar el paquete desde este repo
 
@@ -171,8 +169,8 @@ Desde otra app, apunta a la carpeta con `npm install /ruta/a/excelso-pulse/npm` 
 
 ## Documentación
 
-- [`web-app/docs/pulse-aggregator.md`](web-app/docs/pulse-aggregator.md) — Comportamiento del agregador, variables y endpoints.
-- [`web-app/docs/health-business-pulse.md`](web-app/docs/health-business-pulse.md) — Contrato de referencia del backend `GET /internal/pulse`.
+- [`docs/pulse-aggregator.md`](docs/pulse-aggregator.md) — Comportamiento del agregador, variables y endpoints.
+- [`docs/health-business-pulse.md`](docs/health-business-pulse.md) — Contrato de referencia del backend `GET /internal/pulse`.
 
 ## Seguridad
 
@@ -181,4 +179,4 @@ Desde otra app, apunta a la carpeta con `npm install /ruta/a/excelso-pulse/npm` 
 
 ## Licencia
 
-MIT — ver [`web-app/package.json`](web-app/package.json). La librería en `npm/` usa ISC — ver [`npm/LICENSE`](npm/LICENSE).
+MIT — ver [`package.json`](package.json). La librería en `npm/` usa ISC — ver [`../npm/LICENSE`](../npm/LICENSE).
