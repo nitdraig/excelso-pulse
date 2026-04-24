@@ -7,6 +7,7 @@
 **Health & Business Pulse** for **Express** apps (and reusable from **Next.js** or other runtimes via `collectPulse`).
 
 - Stable JSON (`pulse_version: "1"`), technical metrics, optional business KPIs, `ai_context` text, pluggable infrastructure probes.
+- **`readiness`** (`starting` \| `ready`) and **`user_impact`** (`none` \| `limited` \| `outage`) computed server-side (e.g. Mongo `connecting` → `starting` + `none` so UIs do not treat it as an outage).
 - **`Authorization: Bearer`** protection (timing-safe comparison).
 - Default **MongoDB** probe (`ping` + transient state handling).
 - Optional Express router with per-IP **rate limiting**.
@@ -67,7 +68,8 @@ Add your own auth in production; this sample does not enforce Bearer on the Rout
 | `collectPulse`                                         | Build the payload without Express.        |
 | `createPulseBearerAuthMiddleware`                      | Bearer-only middleware for custom routes. |
 | `getDefaultPulseProbes`, `createMongooseDatabaseProbe` | Extend infrastructure checks.             |
-| Types (`PulsePayload`, `PulseProbe`, …)                | TypeScript contract.                      |
+| `derivePulsePresentation`                              | Same heuristic as `collectPulse` if you build JSON manually. |
+| Types (`PulsePayload`, `PulseProbe`, `PulseReadiness`, …) | TypeScript contract.                   |
 
 ## Configuration hints
 

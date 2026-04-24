@@ -2,6 +2,7 @@ export type {
   CollectPulseOptions,
 } from "./collectPulse";
 export { collectPulse } from "./collectPulse";
+export { derivePulsePresentation } from "./derivePulsePresentation";
 export { derivePulseStatus } from "./derivePulseStatus";
 export { getDefaultPulseProbes } from "./getDefaultPulseProbes";
 export { createMongooseDatabaseProbe } from "./probes/mongooseDatabaseProbe";
@@ -14,6 +15,8 @@ export type {
   PulsePayload,
   PulseProbe,
   PulseProbeCheckResult,
+  PulseReadiness,
+  PulseUserImpact,
 } from "./types";
 export { withTimeout } from "./withTimeout";
 

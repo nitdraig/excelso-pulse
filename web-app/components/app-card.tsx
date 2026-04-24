@@ -11,7 +11,7 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { StatusBadge } from "./status-badge"
+import { PulsePresentationBadge } from "./pulse-presentation-badge"
 import { AppPulse } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -28,7 +28,11 @@ const TrendIcon = ({ trend }: { trend?: "up" | "down" | "stable" }) => {
 
 function dbStatusTone(
   s: AppPulse["infrastructure"]["db_status"],
+  app: Pick<AppPulse, "readiness" | "user_impact">,
 ): "ok" | "warn" | "err" | "muted" {
+  if (app.readiness === "starting" && app.user_impact === "none" && s === "degraded") {
+    return "muted"
+  }
   if (s === "connected") return "ok"
   if (s === "degraded") return "warn"
   if (s === "disconnected") return "err"
@@ -41,6 +45,14 @@ function databaseDisplayName(db: AppPulse["infrastructure"]["database"]) {
   return null
 }
 
+function dbStatusLabel(app: AppPulse): string {
+  if (app.readiness === "starting" && app.user_impact === "none" && app.infrastructure.db_status === "degraded") {
+    return "conectando…"
+  }
+  if (app.infrastructure.db_status === "unknown") return "sin informar"
+  return app.infrastructure.db_status
+}
+
 export function AppCard({ app, onClick }: AppCardProps) {
   const latencyColor =
     app.metrics.latency_ms < 100
@@ -49,14 +61,22 @@ export function AppCard({ app, onClick }: AppCardProps) {
         ? "text-amber-400"
         : "text-red-400"
 
+  const presentationBorder =
+    app.user_impact === "outage" || app.status === "unavailable"
+      ? "border-red-500/30"
+      : app.user_impact === "limited"
+        ? "border-amber-500/30"
+        : app.readiness === "starting" && app.user_impact === "none"
+          ? "border-sky-500/25"
+          : undefined
+
   return (
     <Card
       className={cn(
         "cursor-pointer transition-all duration-200 hover:border-primary/40 hover:bg-card/80",
         "group relative overflow-hidden",
-        app.status === "degraded" && "border-amber-500/30",
-        app.status === "down" && "border-red-500/30",
-        app.status === "unavailable" && "border-border/80 opacity-90"
+        presentationBorder,
+        !presentationBorder && app.status === "unavailable" && "border-border/80 opacity-90",
       )}
       onClick={onClick}
     >
@@ -85,7 +105,11 @@ export function AppCard({ app, onClick }: AppCardProps) {
               ) : null}
             </div>
           </div>
-          <StatusBadge status={app.status} />
+          <PulsePresentationBadge
+            readiness={app.readiness}
+            user_impact={app.user_impact}
+            technicalStatus={app.status}
+          />
         </div>
       </CardHeader>
 
@@ -111,18 +135,16 @@ export function AppCard({ app, onClick }: AppCardProps) {
               <p
                 className={cn(
                   "text-sm font-medium capitalize",
-                  dbStatusTone(app.infrastructure.db_status) === "ok"
+                  dbStatusTone(app.infrastructure.db_status, app) === "ok"
                     ? "text-emerald-400"
-                    : dbStatusTone(app.infrastructure.db_status) === "warn"
+                    : dbStatusTone(app.infrastructure.db_status, app) === "warn"
                       ? "text-amber-400"
-                      : dbStatusTone(app.infrastructure.db_status) === "err"
+                      : dbStatusTone(app.infrastructure.db_status, app) === "err"
                         ? "text-red-400"
-                        : "text-muted-foreground"
+                        : "text-muted-foreground",
                 )}
               >
-                {app.infrastructure.db_status === "unknown"
-                  ? "sin informar"
-                  : app.infrastructure.db_status}
+                {dbStatusLabel(app)}
               </p>
             </div>
           </div>
@@ -187,11 +209,11 @@ export function AppCard({ app, onClick }: AppCardProps) {
             <Database
               className={cn(
                 "w-3.5 h-3.5",
-                dbStatusTone(app.infrastructure.db_status) === "ok"
+                dbStatusTone(app.infrastructure.db_status, app) === "ok"
                   ? "text-primary"
-                  : dbStatusTone(app.infrastructure.db_status) === "warn"
+                  : dbStatusTone(app.infrastructure.db_status, app) === "warn"
                     ? "text-amber-400"
-                    : dbStatusTone(app.infrastructure.db_status) === "err"
+                    : dbStatusTone(app.infrastructure.db_status, app) === "err"
                       ? "text-red-400"
                       : "text-muted-foreground"
               )}

@@ -17,13 +17,15 @@ function portfolioSummary(apps: AppPulse[], meta?: { roundDurationMs?: number; f
   if (apps.length === 0) {
     return "Registra orígenes pulse (slug, URL `/internal/pulse` y nombre de variable del Bearer en el servidor). El panel solo llama a tus backends desde el agregador autenticado; los tokens no salen al navegador."
   }
-  const operational = apps.filter((a) => a.status === "operational").length
-  const unavailable = apps.filter((a) => a.status === "unavailable").length
+  const ready = apps.filter((a) => a.user_impact === "none" && a.readiness === "ready").length
+  const starting = apps.filter((a) => a.readiness === "starting" && a.user_impact === "none").length
+  const limited = apps.filter((a) => a.user_impact === "limited").length
+  const outage = apps.filter((a) => a.user_impact === "outage").length
   const extra =
     meta?.roundDurationMs != null
       ? ` Última ronda agregada en ~${meta.roundDurationMs} ms${meta.fromCache ? " (caché)" : ""}.`
       : ""
-  return `Portfolio: ${apps.length} origen(es); ${operational} OK, ${unavailable} no disponibles u offline.${extra}`
+  return `Portfolio: ${apps.length} origen(es); ${ready} listos para tráfico${starting > 0 ? `, ${starting} en arranque/conexión` : ""}${limited > 0 ? `, ${limited} con rendimiento limitado` : ""}${outage > 0 ? `, ${outage} sin servicio o datos` : ""}.${extra}`
 }
 
 export function CommandDashboard() {
@@ -48,28 +50,52 @@ export function CommandDashboard() {
     setFetchError(null)
     setLoading(true)
     try {
-      const res = await fetch("/api/portfolio", { cache: "no-store" })
-      if (res.status === 401) {
-        window.location.href = "/login"
-        return
+      const fetchOnce = async () => {
+        const res = await fetch("/api/portfolio", { cache: "no-store" })
+        const data = (await res.json()) as {
+          apps?: AppPulse[]
+          error?: string
+          roundDurationMs?: number
+          fromCache?: boolean
+        }
+        return { res, data }
       }
-      const data = (await res.json()) as {
-        apps?: AppPulse[]
-        error?: string
-        roundDurationMs?: number
-        fromCache?: boolean
+
+      let attempt = 0
+
+      while (attempt < 4) {
+        const { res, data } = await fetchOnce()
+
+        if (res.status === 401) {
+          window.location.href = "/login"
+          return
+        }
+
+        if (!res.ok) {
+          setFetchError(data.error ?? "No se pudo cargar el portfolio.")
+          setApps([])
+          setPulseMeta({})
+          return
+        }
+
+        const nextApps = data.apps ?? []
+        setApps(nextApps)
+        setPulseMeta({
+          roundDurationMs: data.roundDurationMs,
+          fromCache: data.fromCache,
+        })
+
+        const needsWarmupRetry =
+          attempt < 3 &&
+          nextApps.some((a) => a.readiness === "starting" && a.user_impact === "none")
+        if (!needsWarmupRetry) {
+          break
+        }
+
+        const delayMs = attempt === 0 ? 1600 : attempt === 1 ? 2200 : 2600
+        await new Promise((r) => setTimeout(r, delayMs))
+        attempt += 1
       }
-      if (!res.ok) {
-        setFetchError(data.error ?? "No se pudo cargar el portfolio.")
-        setApps([])
-        setPulseMeta({})
-        return
-      }
-      setApps(data.apps ?? [])
-      setPulseMeta({
-        roundDurationMs: data.roundDurationMs,
-        fromCache: data.fromCache,
-      })
     } catch {
       setFetchError("Error de red al cargar el portfolio.")
       setApps([])
@@ -134,21 +160,23 @@ export function CommandDashboard() {
               </h2>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5" title="Listos (sin impacto al usuario)">
                     <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    {apps.filter((a) => a.status === "operational").length} OK
+                    {apps.filter((a) => a.user_impact === "none" && a.readiness === "ready").length}{" "}
+                    listos
                   </span>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5" title="Cold start / conexión async">
+                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                    {apps.filter((a) => a.readiness === "starting" && a.user_impact === "none").length}{" "}
+                    arranque
+                  </span>
+                  <span className="flex items-center gap-1.5" title="Degradación con impacto parcial">
                     <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    {apps.filter((a) => a.status === "degraded").length}
+                    {apps.filter((a) => a.user_impact === "limited").length} limitado
                   </span>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5" title="Sin servicio o sin datos agregados">
                     <span className="w-2 h-2 rounded-full bg-red-400" />
-                    {apps.filter((a) => a.status === "down").length}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground" />
-                    {apps.filter((a) => a.status === "unavailable").length} n/d
+                    {apps.filter((a) => a.user_impact === "outage").length} caída
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

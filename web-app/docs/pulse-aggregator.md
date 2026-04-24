@@ -41,6 +41,8 @@ Ninguno devuelve secretos.
 
 Ver `docs/health-business-pulse.md`. Campos opcionales se rellenan con valores por defecto en `lib/pulse/normalize.ts`.
 
+Si el backend publica `readiness` y `user_impact` (p. ej. con **`excelso-pulse-express` ≥ 0.1.3**), el agregador los respeta. Si no, se **infieren** en `normalize.ts` a partir de `status` y de `infrastructure[].detail` (p. ej. Mongo `connecting` → arranque sin marcar caída). El dashboard usa esa capa para badges y bordes; el estado técnico (`status`) sigue disponible para SRE.
+
 ## Tests
 
 ```bash

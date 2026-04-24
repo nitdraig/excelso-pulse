@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { StatusBadge } from "./status-badge"
+import { PulsePresentationBadge } from "./pulse-presentation-badge"
 import { AppPulse, PulseLog } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -69,9 +69,19 @@ export function AppDetailSheet({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge status={app.status} />
-            <span className="text-xs text-muted-foreground font-mono">v{app.pulse_version}</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <PulsePresentationBadge
+              readiness={app.readiness}
+              user_impact={app.user_impact}
+              technicalStatus={app.status}
+            />
+            <span className="text-xs text-muted-foreground inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-mono">v{app.pulse_version}</span>
+              <span className="hidden sm:inline text-border">|</span>
+              <span title="Estado técnico del JSON pulse (SRE / alertas)">
+                técnico: <span className="font-mono text-foreground/80">{app.status}</span>
+              </span>
+            </span>
           </div>
         </SheetHeader>
 

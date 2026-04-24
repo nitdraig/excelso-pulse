@@ -7,6 +7,7 @@ import type {
   PulseLog,
   PulseMetrics,
 } from "@/lib/types"
+import { resolvePulsePresentation } from "@/lib/pulse/derive-presentation"
 
 const kpiItem = z.object({
   label: z.string(),
@@ -42,6 +43,8 @@ const pulseBody = z
         collection_duration_ms: z.number().optional(),
       })
       .optional(),
+    readiness: z.enum(["starting", "ready"]).optional(),
+    user_impact: z.enum(["none", "limited", "outage"]).optional(),
   })
   .passthrough()
 
@@ -90,6 +93,7 @@ type InfraListEntry = {
   kind?: string
   status?: string
   latency_ms?: number
+  detail?: string
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -277,6 +281,7 @@ export function normalizeBackendPulse(
   const parsed = pulseBody.safeParse(raw)
   if (!parsed.success) {
     const now = new Date().toISOString()
+    const pres = resolvePulsePresentation("unavailable", null, undefined, undefined)
     return {
       contract_version: "unknown",
       pulse: {
@@ -284,6 +289,8 @@ export function normalizeBackendPulse(
         description: "",
         icon: "📦",
         status: "unavailable",
+        readiness: pres.readiness,
+        user_impact: pres.user_impact,
         pulse_version: "?",
         metrics: defaultMetrics(),
         kpis: [] as BusinessKPIs[],
@@ -309,6 +316,13 @@ export function normalizeBackendPulse(
 
   const infraList = isInfraComponentList(d.infrastructure) ? d.infrastructure : null
   const dbLatency = infraList ? databaseLatencyFromList(infraList) : undefined
+
+  const presentation = resolvePulsePresentation(
+    status,
+    infraList,
+    d.readiness,
+    d.user_impact,
+  )
 
   const infrastructure = infrastructureFromUnknown(d.infrastructure)
   const metrics = metricsFromUnknown(d.metrics, { dbLatencyMs: dbLatency })
@@ -338,6 +352,8 @@ export function normalizeBackendPulse(
       description,
       icon: d.icon ?? "📦",
       status,
+      readiness: presentation.readiness,
+      user_impact: presentation.user_impact,
       pulse_version: pv,
       metrics,
       kpis,

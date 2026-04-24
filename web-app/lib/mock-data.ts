@@ -7,6 +7,8 @@ export const mockApps: AppPulse[] = [
     description: "Sustainability & Food Waste Platform",
     icon: "🌱",
     status: "operational",
+    readiness: "ready",
+    user_impact: "none",
     pulse_version: "2.4.1",
     metrics: {
       latency_ms: 42,
@@ -41,6 +43,8 @@ export const mockApps: AppPulse[] = [
     description: "AI-Powered Environmental Analytics",
     icon: "🤖",
     status: "operational",
+    readiness: "ready",
+    user_impact: "none",
     pulse_version: "3.1.0",
     metrics: {
       latency_ms: 78,
@@ -75,6 +79,8 @@ export const mockApps: AppPulse[] = [
     description: "Developer Tools & Automation Suite",
     icon: "⚡",
     status: "degraded",
+    readiness: "ready",
+    user_impact: "limited",
     pulse_version: "1.8.3",
     metrics: {
       latency_ms: 156,
@@ -109,6 +115,8 @@ export const mockApps: AppPulse[] = [
     description: "AI Recruitment & Talent Matching",
     icon: "💎",
     status: "operational",
+    readiness: "ready",
+    user_impact: "none",
     pulse_version: "4.2.0",
     metrics: {
       latency_ms: 63,
@@ -140,9 +148,9 @@ export const mockApps: AppPulse[] = [
 ]
 
 export const getExecutiveSummary = (): string => {
-  const operational = mockApps.filter((app) => app.status === "operational").length
-  const degraded = mockApps.filter((app) => app.status === "degraded").length
-  const down = mockApps.filter((app) => app.status === "down").length
+  const ready = mockApps.filter((app) => app.user_impact === "none" && app.readiness === "ready").length
+  const limited = mockApps.filter((app) => app.user_impact === "limited").length
+  const outage = mockApps.filter((app) => app.user_impact === "outage").length
 
-  return `Good afternoon, Commander. System status report: ${operational} of ${mockApps.length} applications are fully operational${degraded > 0 ? `, ${degraded} showing degraded performance` : ""}${down > 0 ? `, and ${down} currently offline` : ""}. Fuddy leads sustainability metrics with 2.4 tons of waste prevented today. JEMA's AI models maintain 94.2% prediction accuracy. Skipy is experiencing elevated latency — engineering team is actively investigating MongoDB connection pooling. Mining Talent Net reports record placement velocity with 87% match rate. Overall ecosystem health: ${down === 0 ? "Stable" : "Attention Required"}.`
+  return `Good afternoon, Commander. System status report: ${ready} of ${mockApps.length} applications are fully operational${limited > 0 ? `, ${limited} showing limited performance` : ""}${outage > 0 ? `, and ${outage} currently offline` : ""}. Fuddy leads sustainability metrics with 2.4 tons of waste prevented today. JEMA's AI models maintain 94.2% prediction accuracy. Skipy is experiencing elevated latency — engineering team is actively investigating MongoDB connection pooling. Mining Talent Net reports record placement velocity with 87% match rate. Overall ecosystem health: ${outage === 0 ? "Stable" : "Attention Required"}.`
 }

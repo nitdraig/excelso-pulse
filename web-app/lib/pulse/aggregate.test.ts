@@ -25,6 +25,8 @@ describe("aggregatePulseSources", () => {
 
     expect(entries[0].appId).toBe("a")
     expect(entries[0].status).toBe("unavailable")
+    expect(entries[0].readiness).toBe("ready")
+    expect(entries[0].user_impact).toBe("outage")
     expect(entries[0].error?.code).toBe("http_error")
   })
 
@@ -45,6 +47,8 @@ describe("aggregatePulseSources", () => {
     ])
 
     expect(entries[0].status).toBe("operational")
+    expect(entries[0].readiness).toBe("ready")
+    expect(entries[0].user_impact).toBe("none")
     expect(entries[0].metrics.latency_ms).toBe(33)
     expect(entries[0].infrastructure.database).toBe("unknown")
     expect(entries[0].infrastructure.db_status).toBe("unknown")

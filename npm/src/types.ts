@@ -3,6 +3,10 @@
  * Extensible: nuevos probes implementan {@link PulseProbe}.
  */
 
+export type PulseReadiness = "starting" | "ready";
+
+export type PulseUserImpact = "none" | "limited" | "outage";
+
 export type PulseOverallStatus = "ok" | "degraded" | "down";
 
 export type InfrastructureKind = "database" | "integration" | "cache";
@@ -34,6 +38,10 @@ export interface PulseProbe {
 export interface PulsePayload {
   pulse_version: "1";
   status: PulseOverallStatus;
+  /** Dependencias listas para tráfico vs transición (p. ej. Mongo `connecting`). */
+  readiness: PulseReadiness;
+  /** Impacto percibido para usuarios / copy de UI (no equivale 1:1 a `status`). */
+  user_impact: PulseUserImpact;
   context: {
     product_name: string;
     environment: string;

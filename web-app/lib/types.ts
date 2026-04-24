@@ -1,5 +1,11 @@
 export type AppStatus = "operational" | "degraded" | "down" | "unavailable"
 
+/** Alineado con el contrato `excelso-pulse-express` (`readiness`). */
+export type PulseReadiness = "starting" | "ready"
+
+/** Alineado con el contrato `excelso-pulse-express` (`user_impact`). */
+export type PulseUserImpact = "none" | "limited" | "outage"
+
 export interface PulseMetrics {
   latency_ms: number
   uptime_percent: number
@@ -34,7 +40,10 @@ export interface AppPulse {
   icon: string
   /** URL pública de la app (front); el agregador sigue usando `pulseUrl` en servidor. */
   appUrl?: string
+  /** Estado técnico del origen (contrato operativo). */
   status: AppStatus
+  readiness: PulseReadiness
+  user_impact: PulseUserImpact
   pulse_version: string
   metrics: PulseMetrics
   kpis: BusinessKPIs[]

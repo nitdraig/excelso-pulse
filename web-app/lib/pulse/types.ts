@@ -4,6 +4,8 @@ import type {
   Infrastructure,
   PulseLog,
   PulseMetrics,
+  PulseReadiness,
+  PulseUserImpact,
 } from "@/lib/types"
 
 export type PulseFetchErrorCode =
@@ -20,6 +22,8 @@ export type PulseSummaryEntry = {
   contract_version: string
   pulse_version: string
   status: AppStatus
+  readiness: PulseReadiness
+  user_impact: PulseUserImpact
   name?: string
   description?: string
   icon?: string

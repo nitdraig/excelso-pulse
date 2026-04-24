@@ -41,6 +41,8 @@ describe("normalizeBackendPulse", () => {
     expect(pulse.metrics.latency_ms).toBe(115)
     expect(pulse.infrastructure.database).toBe("mongodb")
     expect(pulse.infrastructure.db_status).toBe("connected")
+    expect(pulse.readiness).toBe("ready")
+    expect(pulse.user_impact).toBe("none")
     expect(pulse.kpis.some((k) => k.label.includes("Uptime"))).toBe(true)
     expect(pulse.kpis.some((k) => k.label.includes("Heap"))).toBe(true)
   })
@@ -68,6 +70,30 @@ describe("normalizeBackendPulse", () => {
     expect(pulse.infrastructure.db_status).toBe("connected")
   })
 
+  it("degraded + Mongo connecting → presentación de arranque", () => {
+    const { pulse } = normalizeBackendPulse(
+      {
+        pulse_version: "1",
+        status: "degraded",
+        infrastructure: [
+          {
+            id: "mongodb",
+            name: "MongoDB",
+            kind: "database",
+            status: "degraded",
+            detail: "connecting",
+            latency_ms: 2,
+          },
+        ],
+        metrics: { technical: {}, business: {} },
+      },
+      "svc",
+    )
+    expect(pulse.status).toBe("degraded")
+    expect(pulse.readiness).toBe("starting")
+    expect(pulse.user_impact).toBe("none")
+  })
+
   it("sigue aceptando métricas planas e infra objeto", () => {
     const { pulse } = normalizeBackendPulse(
       {
@@ -81,5 +107,7 @@ describe("normalizeBackendPulse", () => {
     expect(pulse.metrics.uptime_percent).toBe(99)
     expect(pulse.infrastructure.database).toBe("postgres")
     expect(pulse.infrastructure.vercel).toBe(true)
+    expect(pulse.readiness).toBe("ready")
+    expect(pulse.user_impact).toBe("none")
   })
 })

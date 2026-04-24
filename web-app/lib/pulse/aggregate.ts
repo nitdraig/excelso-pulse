@@ -5,6 +5,11 @@ import {
   getPulseRoundTimeoutMs,
 } from "@/lib/pulse/config"
 
+const PRESENTATION_FETCH_FAILURE = {
+  readiness: "ready" as const,
+  user_impact: "outage" as const,
+}
+
 function combineAbortSignals(signals: AbortSignal[]): AbortSignal {
   const c = new AbortController()
   const forward = () => {
@@ -32,6 +37,7 @@ async function fetchPulseSource(
       contract_version: "unknown",
       pulse_version: "?",
       status: "unavailable",
+      ...PRESENTATION_FETCH_FAILURE,
       name: source.appId,
       description: "",
       icon: "📦",
@@ -74,6 +80,7 @@ async function fetchPulseSource(
         contract_version: "unknown",
         pulse_version: "?",
         status: "unavailable",
+        ...PRESENTATION_FETCH_FAILURE,
         name: source.appId,
         description: "",
         icon: "📦",
@@ -109,6 +116,7 @@ async function fetchPulseSource(
         contract_version: "unknown",
         pulse_version: "?",
         status: "unavailable",
+        ...PRESENTATION_FETCH_FAILURE,
         name: source.appId,
         description: "",
         icon: "📦",
@@ -143,6 +151,7 @@ async function fetchPulseSource(
         contract_version: "unknown",
         pulse_version: "?",
         status: "unavailable",
+        ...PRESENTATION_FETCH_FAILURE,
         name: source.appId,
         description: "",
         icon: "📦",
@@ -174,6 +183,8 @@ async function fetchPulseSource(
       contract_version,
       pulse_version: pulse.pulse_version,
       status: pulse.status,
+      readiness: pulse.readiness,
+      user_impact: pulse.user_impact,
       name: pulse.name,
       description: pulse.description,
       icon: pulse.icon,
@@ -197,6 +208,7 @@ async function fetchPulseSource(
       contract_version: "unknown",
       pulse_version: "?",
       status: "unavailable",
+      ...PRESENTATION_FETCH_FAILURE,
       name: source.appId,
       description: "",
       icon: "📦",

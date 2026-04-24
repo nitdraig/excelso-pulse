@@ -4,7 +4,7 @@ import { Settings, LayoutGrid, Activity, Bell, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { StatusBadge } from "./status-badge"
+import { PulsePresentationBadge } from "./pulse-presentation-badge"
 import { AppPulse } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -76,7 +76,12 @@ export function CommandSidebar({
               {!isCollapsed && (
                 <>
                   <span className="flex-1 text-left truncate">{app.name}</span>
-                  <StatusBadge status={app.status} showLabel={false} />
+                  <PulsePresentationBadge
+                    readiness={app.readiness}
+                    user_impact={app.user_impact}
+                    technicalStatus={app.status}
+                    showLabel={false}
+                  />
                 </>
               )}
             </Button>

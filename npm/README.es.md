@@ -5,6 +5,7 @@
 **Health & Business Pulse** para aplicaciones **Express** (y reutilizable en **Next.js** u otros runtimes mediante `collectPulse`).
 
 - JSON estable (`pulse_version: "1"`), métricas técnicas, KPIs de negocio opcionales, texto `ai_context`, infraestructura con probes enchufables.
+- Campos **`readiness`** (`starting` \| `ready`) y **`user_impact`** (`none` \| `limited` \| `outage`) derivados en servidor (cold start Mongo `connecting` → `starting` + `none` sin alarmar la UI).
 - Protección **`Authorization: Bearer`** (comparación resistente a timing).
 - Probe por defecto **MongoDB** (`ping` + manejo de estados transitorios).
 - Router Express opcional con **rate limit** por IP.
@@ -65,7 +66,8 @@ En producción añade tu propia autenticación; este ejemplo no exige Bearer en 
 | `collectPulse` | Construir el JSON sin Express. |
 | `createPulseBearerAuthMiddleware` | Solo middleware Bearer sobre rutas propias. |
 | `getDefaultPulseProbes`, `createMongooseDatabaseProbe` | Ampliar chequeos de infraestructura. |
-| Tipos (`PulsePayload`, `PulseProbe`, …) | Contrato TypeScript. |
+| `derivePulsePresentation` | Misma heurística que `collectPulse` para clientes que armen el JSON a mano. |
+| Tipos (`PulsePayload`, `PulseProbe`, `PulseReadiness`, …) | Contrato TypeScript. |
 
 ## Configuración
 

@@ -1,6 +1,7 @@
 import type { AppPulse } from "@/lib/types"
 import { defaultInfra } from "@/lib/pulse/normalize"
 import type { PulseSummaryEntry } from "@/lib/pulse/types"
+import { resolvePulsePresentation } from "@/lib/pulse/derive-presentation"
 
 export type ProjectRegistryLean = {
   _id: { toString(): string }
@@ -56,12 +57,15 @@ export function mergeRegistryWithPulseEntries(
 
     if (!doc.pulseUrl || !hasBearerConfigured(doc)) {
       const now = new Date().toISOString()
+      const pres = resolvePulsePresentation("unavailable", null, undefined, undefined)
       const pulse: AppPulse = {
         id,
         name: doc.name,
         description: doc.description ?? "",
         icon: doc.icon ?? "📦",
         status: "unavailable",
+        readiness: pres.readiness,
+        user_impact: pres.user_impact,
         pulse_version: "?",
         metrics: {
           latency_ms: 0,
@@ -87,12 +91,15 @@ export function mergeRegistryWithPulseEntries(
 
     if (!live) {
       const now = new Date().toISOString()
+      const pres = resolvePulsePresentation("unavailable", null, undefined, undefined)
       const pulse: AppPulse = {
         id,
         name: doc.name,
         description: doc.description ?? "",
         icon: doc.icon ?? "📦",
         status: "unavailable",
+        readiness: pres.readiness,
+        user_impact: pres.user_impact,
         pulse_version: "?",
         metrics: {
           latency_ms: 0,
@@ -122,6 +129,8 @@ export function mergeRegistryWithPulseEntries(
       description: doc.description ?? live.description ?? "",
       icon: doc.icon ?? live.icon ?? "📦",
       status: live.status,
+      readiness: live.readiness,
+      user_impact: live.user_impact,
       pulse_version: live.pulse_version,
       metrics: live.metrics,
       kpis: live.kpis,

@@ -1,3 +1,4 @@
+import { derivePulsePresentation } from "./derivePulsePresentation";
 import { derivePulseStatus } from "./derivePulseStatus";
 import { getDefaultPulseProbes } from "./getDefaultPulseProbes";
 import type {
@@ -95,11 +96,14 @@ export async function collectPulse(
       probes.map((p) => runSingleProbe(p, probeTimeout, controller.signal))
     );
     const status = derivePulseStatus(infrastructure);
+    const { readiness, user_impact } = derivePulsePresentation(status, infrastructure);
     const mem = process.memoryUsage();
 
     return {
       pulse_version: "1",
       status,
+      readiness,
+      user_impact,
       context: {
         product_name: options?.productName ?? DEFAULT_PRODUCT,
         environment: options?.environment ?? process.env.NODE_ENV ?? "development",
