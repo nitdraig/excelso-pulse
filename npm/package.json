@@ -1,6 +1,6 @@
 {
   "name": "excelso-pulse-express",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Health & Business Pulse for Express: protected JSON pulse, pluggable probes (MongoDB by default).",
   "keywords": [
     "express",
@@ -10,13 +10,13 @@
     "mongodb",
     "observability"
   ],
-  "homepage": "https://github.com/your-org/express-base#readme",
+  "homepage": "https://pulse.excelso.xyz",
   "bugs": {
-    "url": "https://github.com/your-org/express-base/issues"
+    "url": "https://github.com/nitdraig/excelso-pulse-express/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-org/express-base.git",
+    "url": "git+https://github.com/nitdraig/excelso-pulse-express.git",
     "directory": "npm/excelso-pulse-express"
   },
   "license": "ISC",
