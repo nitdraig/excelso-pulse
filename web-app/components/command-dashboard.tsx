@@ -1,34 +1,23 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { AlertCircle, Loader2, RefreshCw } from "lucide-react"
+import { AlertCircle, FolderPlus, Loader2, RefreshCw } from "lucide-react"
+import { useTranslation } from "@/components/i18n-provider"
 import { CommandHeader } from "./command-header"
 import { CommandSidebar } from "./command-sidebar"
 import { AISummary } from "./ai-summary"
 import { AppCard } from "./app-card"
 import { AppDetailSheet } from "./app-detail-sheet"
+import { MobileTabBar } from "./mobile-tab-bar"
 import { CreateProjectDialog } from "./projects/create-project-dialog"
 import { DeleteProjectDialog } from "./projects/delete-project-dialog"
 import { EditProjectDialog } from "./projects/edit-project-dialog"
 import { Button } from "@/components/ui/button"
+import { buildPortfolioSummary } from "@/lib/i18n/portfolio-summary"
 import type { AppPulse } from "@/lib/types"
 
-function portfolioSummary(apps: AppPulse[], meta?: { roundDurationMs?: number; fromCache?: boolean }): string {
-  if (apps.length === 0) {
-    return "Registra orígenes pulse (slug, URL `/internal/pulse` y nombre de variable del Bearer en el servidor). El panel solo llama a tus backends desde el agregador autenticado; los tokens no salen al navegador."
-  }
-  const ready = apps.filter((a) => a.user_impact === "none" && a.readiness === "ready").length
-  const starting = apps.filter((a) => a.readiness === "starting" && a.user_impact === "none").length
-  const limited = apps.filter((a) => a.user_impact === "limited").length
-  const outage = apps.filter((a) => a.user_impact === "outage").length
-  const extra =
-    meta?.roundDurationMs != null
-      ? ` Última ronda agregada en ~${meta.roundDurationMs} ms${meta.fromCache ? " (caché)" : ""}.`
-      : ""
-  return `Portfolio: ${apps.length} origen(es); ${ready} listos para tráfico${starting > 0 ? `, ${starting} en arranque/conexión` : ""}${limited > 0 ? `, ${limited} con rendimiento limitado` : ""}${outage > 0 ? `, ${outage} sin servicio o datos` : ""}.${extra}`
-}
-
 export function CommandDashboard() {
+  const { t, locale } = useTranslation()
   const [apps, setApps] = useState<AppPulse[]>([])
   const [pulseMeta, setPulseMeta] = useState<{
     roundDurationMs?: number
@@ -41,6 +30,7 @@ export function CommandDashboard() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [editRouteKey, setEditRouteKey] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{
     key: string
     name: string
@@ -67,12 +57,12 @@ export function CommandDashboard() {
         const { res, data } = await fetchOnce()
 
         if (res.status === 401) {
-          window.location.href = "/login"
+          window.location.href = "/login?callbackUrl=%2Fdashboard"
           return
         }
 
         if (!res.ok) {
-          setFetchError(data.error ?? "No se pudo cargar el portfolio.")
+          setFetchError(data.error ?? t("dashboard.loadError"))
           setApps([])
           setPulseMeta({})
           return
@@ -97,21 +87,21 @@ export function CommandDashboard() {
         attempt += 1
       }
     } catch {
-      setFetchError("Error de red al cargar el portfolio.")
+      setFetchError(t("dashboard.networkError"))
       setApps([])
       setPulseMeta({})
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void loadPortfolio()
   }, [loadPortfolio])
 
   const summary = useMemo(
-    () => portfolioSummary(apps, pulseMeta),
-    [apps, pulseMeta],
+    () => buildPortfolioSummary(locale, apps, pulseMeta),
+    [locale, apps, pulseMeta],
   )
 
   const filteredApps = selectedAppId
@@ -135,8 +125,10 @@ export function CommandDashboard() {
     void loadPortfolio()
   }, [loadPortfolio])
 
+  const selectedName = apps.find((a) => a.id === selectedAppId)?.name ?? t("dashboard.projectFallback")
+
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-dvh max-h-dvh flex-col bg-background lg:flex-row">
       <CommandSidebar
         apps={apps}
         selectedApp={selectedAppId}
@@ -145,38 +137,38 @@ export function CommandDashboard() {
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <CommandHeader />
 
-        <main className="flex-1 overflow-auto p-4 lg:p-6 space-y-6">
+        <main className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-4 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:space-y-6 sm:px-4 sm:py-5 lg:space-y-6 lg:px-6 lg:py-6 lg:pb-6">
           <AISummary summary={summary} />
 
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-semibold text-foreground">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">
                 {selectedAppId
-                  ? `${apps.find((a) => a.id === selectedAppId)?.name ?? "Proyecto"} — vista`
-                  : "Orígenes pulse"}
+                  ? `${selectedName} — ${t("dashboard.projectView")}`
+                  : t("dashboard.pulseSources")}
               </h2>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1.5" title="Listos (sin impacto al usuario)">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 text-xs text-muted-foreground sm:flex-wrap sm:overflow-visible sm:text-sm">
+                  <span className="flex shrink-0 items-center gap-1.5" title={t("dashboard.tooltipReady")}>
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
                     {apps.filter((a) => a.user_impact === "none" && a.readiness === "ready").length}{" "}
-                    listos
+                    {t("dashboard.countReady")}
                   </span>
-                  <span className="flex items-center gap-1.5" title="Cold start / conexión async">
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                  <span className="flex shrink-0 items-center gap-1.5" title={t("dashboard.tooltipStarting")}>
+                    <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-sky-400" />
                     {apps.filter((a) => a.readiness === "starting" && a.user_impact === "none").length}{" "}
-                    arranque
+                    {t("dashboard.countStarting")}
                   </span>
-                  <span className="flex items-center gap-1.5" title="Degradación con impacto parcial">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    {apps.filter((a) => a.user_impact === "limited").length} limitado
+                  <span className="flex shrink-0 items-center gap-1.5" title={t("dashboard.tooltipLimited")}>
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" />
+                    {apps.filter((a) => a.user_impact === "limited").length} {t("dashboard.countLimited")}
                   </span>
-                  <span className="flex items-center gap-1.5" title="Sin servicio o sin datos agregados">
-                    <span className="w-2 h-2 rounded-full bg-red-400" />
-                    {apps.filter((a) => a.user_impact === "outage").length} caída
+                  <span className="flex shrink-0 items-center gap-1.5" title={t("dashboard.tooltipOutage")}>
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-red-400" />
+                    {apps.filter((a) => a.user_impact === "outage").length} {t("dashboard.countOutage")}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -189,9 +181,34 @@ export function CommandDashboard() {
                     disabled={loading}
                   >
                     <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                    Actualizar
+                    <span className="hidden sm:inline">{t("dashboard.refresh")}</span>
                   </Button>
-                  <CreateProjectDialog onSuccess={handlePortfolioMutate} />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="default"
+                    className="inline-flex gap-2 lg:hidden"
+                    onClick={() => setCreateOpen(true)}
+                    aria-label={t("projects.newSource")}
+                  >
+                    <FolderPlus className="h-4 w-4" />
+                    <span className="max-w-36 truncate sm:max-w-none">{t("projects.newSource")}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="default"
+                    className="hidden gap-2 lg:inline-flex"
+                    onClick={() => setCreateOpen(true)}
+                  >
+                    <FolderPlus className="h-4 w-4" />
+                    {t("projects.newSource")}
+                  </Button>
+                  <CreateProjectDialog
+                    open={createOpen}
+                    onOpenChange={setCreateOpen}
+                    onSuccess={handlePortfolioMutate}
+                  />
                 </div>
               </div>
             </div>
@@ -203,22 +220,22 @@ export function CommandDashboard() {
                   {fetchError}
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => void loadPortfolio()}>
-                  Reintentar
+                  {t("dashboard.retry")}
                 </Button>
               </div>
             ) : null}
 
             {loading ? (
-              <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground sm:py-16">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <span className="text-sm">Agregando pulse…</span>
+                <span className="text-sm">{t("dashboard.loadingPortfolio")}</span>
               </div>
             ) : fetchError ? null : filteredApps.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-muted/20 px-6 py-12 text-center text-sm text-muted-foreground">
-                No hay orígenes registrados. Pulsa «Nuevo proyecto» y define slug, URL pulse y la variable de entorno del Bearer en el servidor.
+              <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground sm:px-6 sm:py-12">
+                {t("dashboard.emptyState")}
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
                 {filteredApps.map((app) => (
                   <AppCard key={app.id} app={app} onClick={() => handleAppClick(app)} />
                 ))}
@@ -227,6 +244,8 @@ export function CommandDashboard() {
           </div>
         </main>
       </div>
+
+      <MobileTabBar />
 
       <AppDetailSheet
         app={detailApp}

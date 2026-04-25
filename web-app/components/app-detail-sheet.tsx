@@ -9,6 +9,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react"
+import { useTranslation } from "@/components/i18n-provider"
 import {
   Sheet,
   SheetContent,
@@ -52,11 +53,14 @@ export function AppDetailSheet({
   onRequestEdit,
   onRequestDelete,
 }: AppDetailSheetProps) {
+  const { t, locale } = useTranslation()
+  const localeTag = locale === "es" ? "es-ES" : "en-US"
+
   if (!app) return null
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg">
+      <SheetContent className="w-full pb-[env(safe-area-inset-bottom)] sm:max-w-lg">
         <SheetHeader className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -78,8 +82,9 @@ export function AppDetailSheet({
             <span className="text-xs text-muted-foreground inline-flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="font-mono">v{app.pulse_version}</span>
               <span className="hidden sm:inline text-border">|</span>
-              <span title="Estado técnico del JSON pulse (SRE / alertas)">
-                técnico: <span className="font-mono text-foreground/80">{app.status}</span>
+              <span title={t("sheet.technicalNote")}>
+                {t("sheet.technicalPulse")}:{" "}
+                <span className="font-mono text-foreground/80">{app.status}</span>
               </span>
             </span>
           </div>
@@ -87,10 +92,9 @@ export function AppDetailSheet({
 
         <ScrollArea className="h-[calc(100vh-12rem)] mt-6 pr-4">
           <div className="space-y-6">
-            {/* AI Context */}
             <div className="space-y-2">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">
-                AI Analysis
+                {t("sheet.aiAnalysis")}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed bg-secondary/50 p-4 rounded-lg border border-border">
                 {app.ai_context}
@@ -99,34 +103,33 @@ export function AppDetailSheet({
 
             <Separator />
 
-            {/* Metrics */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Technical Metrics
+                {t("sheet.technicalMetrics")}
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground">Latency</p>
+                  <p className="text-xs text-muted-foreground">{t("sheet.latency")}</p>
                   <p className="text-lg font-mono font-semibold text-foreground">
                     {app.metrics.latency_ms}
                     <span className="text-sm text-muted-foreground ml-1">ms</span>
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground">Uptime</p>
+                  <p className="text-xs text-muted-foreground">{t("sheet.uptime")}</p>
                   <p className="text-lg font-mono font-semibold text-foreground">
                     {app.metrics.uptime_percent}
                     <span className="text-sm text-muted-foreground ml-1">%</span>
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground">Requests (24h)</p>
+                  <p className="text-xs text-muted-foreground">{t("sheet.requests24h")}</p>
                   <p className="text-lg font-mono font-semibold text-foreground">
                     {(app.metrics.requests_24h / 1000).toFixed(1)}K
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground">Error Rate</p>
+                  <p className="text-xs text-muted-foreground">{t("sheet.errorRate")}</p>
                   <p
                     className={cn(
                       "text-lg font-mono font-semibold",
@@ -134,7 +137,7 @@ export function AppDetailSheet({
                         ? "text-emerald-400"
                         : app.metrics.error_rate < 1
                           ? "text-amber-400"
-                          : "text-red-400"
+                          : "text-red-400",
                     )}
                   >
                     {app.metrics.error_rate}%
@@ -145,10 +148,9 @@ export function AppDetailSheet({
 
             <Separator />
 
-            {/* Recent Logs */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Recent Activity
+                {t("sheet.recentActivity")}
               </h3>
               <div className="space-y-2">
                 {app.logs.map((log, index) => (
@@ -160,7 +162,7 @@ export function AppDetailSheet({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground">{log.event}</p>
                       <p className="text-xs text-muted-foreground font-mono">
-                        {new Date(log.timestamp).toLocaleString("en-US", {
+                        {new Date(log.timestamp).toLocaleString(localeTag, {
                           month: "short",
                           day: "numeric",
                           hour: "2-digit",
@@ -175,7 +177,6 @@ export function AppDetailSheet({
 
             <Separator />
 
-            {/* Actions */}
             <div className="flex flex-col gap-2">
               {onRequestEdit ? (
                 <Button
@@ -185,7 +186,7 @@ export function AppDetailSheet({
                   onClick={() => onRequestEdit(app.id)}
                 >
                   <Pencil className="w-4 h-4" />
-                  Editar origen
+                  {t("sheet.editSource")}
                 </Button>
               ) : null}
               {onRequestDelete ? (
@@ -196,24 +197,24 @@ export function AppDetailSheet({
                   onClick={() => onRequestDelete(app.id, app.name)}
                 >
                   <Trash2 className="w-4 h-4" />
-                  Eliminar origen
+                  {t("sheet.deleteSource")}
                 </Button>
               ) : null}
               {app.appUrl ? (
                 <Button variant="outline" className="w-full justify-start gap-2" asChild>
                   <a href={app.appUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="w-4 h-4" />
-                    Abrir app (front)
+                    {t("sheet.openApp")}
                   </a>
                 </Button>
               ) : (
                 <p className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                  Sin URL de front. Edita el origen para guardar el enlace público de la app.
+                  {t("sheet.noAppUrl")}
                 </p>
               )}
               <Button variant="outline" className="w-full justify-start gap-2">
                 <AlertCircle className="w-4 h-4" />
-                View Full Logs
+                {t("sheet.viewFullLogs")}
               </Button>
             </div>
           </div>

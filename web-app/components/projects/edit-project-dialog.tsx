@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Loader2, Pencil } from "lucide-react"
+import { useTranslation } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -15,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ensureHttpsUrl } from "@/lib/url"
 
 type RegistryProject = {
   slug: string
@@ -39,6 +41,7 @@ export function EditProjectDialog({
   onOpenChange,
   onSuccess,
 }: EditProjectDialogProps) {
+  const { t } = useTranslation()
   const [slug, setSlug] = useState("")
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -63,16 +66,15 @@ export function EditProjectDialog({
     setBearerToken("")
     void (async () => {
       try {
-        const res = await fetch(
-          `/api/projects/${encodeURIComponent(apiPathKey)}`,
-          { cache: "no-store" },
-        )
+        const res = await fetch(`/api/projects/${encodeURIComponent(apiPathKey)}`, {
+          cache: "no-store",
+        })
         const data = (await res.json()) as {
           project?: RegistryProject
           error?: string
         }
         if (!res.ok || !data.project) {
-          if (!cancelled) setLoadError(data.error ?? "No se pudo cargar el origen.")
+          if (!cancelled) setLoadError(data.error ?? t("projects.loadError"))
           return
         }
         if (cancelled) return
@@ -85,7 +87,7 @@ export function EditProjectDialog({
         setPulseUrl(p.pulseUrl)
         setHadBearer(p.hasBearer)
       } catch {
-        if (!cancelled) setLoadError("Error de red.")
+        if (!cancelled) setLoadError(t("projects.networkError"))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -93,7 +95,7 @@ export function EditProjectDialog({
     return () => {
       cancelled = true
     }
-  }, [open, apiPathKey])
+  }, [open, apiPathKey, t])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -106,15 +108,15 @@ export function EditProjectDialog({
         name: name.trim(),
         description: description.trim(),
         icon: icon.trim() || "📦",
-        appUrl: appUrl.trim(),
-        pulseUrl: pulseUrl.trim(),
+        appUrl: ensureHttpsUrl(appUrl),
+        pulseUrl: ensureHttpsUrl(pulseUrl),
       }
       if (clearToken) {
         body.clearBearer = true
       } else {
-        const t = bearerToken.trim()
-        if (t.length >= 8) {
-          body.bearerToken = t
+        const tok = bearerToken.trim()
+        if (tok.length >= 8) {
+          body.bearerToken = tok
         }
       }
 
@@ -125,7 +127,7 @@ export function EditProjectDialog({
       })
       const data = (await res.json()) as { error?: string }
       if (!res.ok) {
-        setSaveError(data.error ?? "No se pudo guardar.")
+        setSaveError(data.error ?? t("projects.saveError"))
         return
       }
       onOpenChange(false)
@@ -141,32 +143,29 @@ export function EditProjectDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="h-5 w-5" />
-            Editar origen pulse
+            {t("projects.editTitle")}
           </DialogTitle>
-          <DialogDescription>
-            El token se guarda <strong>cifrado</strong>; aquí solo puedes sustituirlo o borrarlo. No se muestra el
-            valor actual.
-          </DialogDescription>
+          <DialogDescription>{t("projects.editDescription")}</DialogDescription>
         </DialogHeader>
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
-            Cargando…
+            {t("projects.loading")}
           </div>
         ) : loadError ? (
           <p className="text-sm text-destructive">{loadError}</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-xs text-muted-foreground rounded-md border border-border bg-muted/30 px-3 py-2">
-              Token en servidor:{" "}
+              {t("projects.tokenServer")}{" "}
               <span className="font-medium text-foreground">
-                {hadBearer ? "configurado (oculto)" : "no configurado"}
+                {hadBearer ? t("projects.tokenSet") : t("projects.tokenUnset")}
               </span>
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-1">
-                <Label htmlFor="edit-slug">Slug (appId)</Label>
+                <Label htmlFor="edit-slug">{t("projects.slugLabel")}</Label>
                 <Input
                   id="edit-slug"
                   required
@@ -178,7 +177,7 @@ export function EditProjectDialog({
                 />
               </div>
               <div className="space-y-2 sm:col-span-1">
-                <Label htmlFor="edit-name">Nombre visible</Label>
+                <Label htmlFor="edit-name">{t("projects.nameLabel")}</Label>
                 <Input
                   id="edit-name"
                   required
@@ -189,30 +188,32 @@ export function EditProjectDialog({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-app-url">URL de la app (front)</Label>
+              <Label htmlFor="edit-app-url">{t("projects.appUrlLabel")}</Label>
               <Input
                 id="edit-app-url"
                 type="url"
                 value={appUrl}
                 onChange={(e) => setAppUrl(e.target.value)}
+                onBlur={() => setAppUrl((u) => ensureHttpsUrl(u))}
                 disabled={saving}
-                placeholder="https://app.ejemplo.com"
+                placeholder="https://app.example.com"
               />
-              <p className="text-[11px] text-muted-foreground">Opcional. Vacía para quitar el enlace.</p>
+              <p className="text-[11px] text-muted-foreground">{t("projects.appUrlEditHint")}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-pulse-url">URL pulse (backend)</Label>
+              <Label htmlFor="edit-pulse-url">{t("projects.pulseUrlLabelShort")}</Label>
               <Input
                 id="edit-pulse-url"
                 type="url"
                 required
                 value={pulseUrl}
                 onChange={(e) => setPulseUrl(e.target.value)}
+                onBlur={() => setPulseUrl((u) => ensureHttpsUrl(u))}
                 disabled={saving}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-bearer">Nuevo token Bearer (opcional)</Label>
+              <Label htmlFor="edit-bearer">{t("projects.bearerNew")}</Label>
               <Input
                 id="edit-bearer"
                 type="password"
@@ -220,11 +221,9 @@ export function EditProjectDialog({
                 value={bearerToken}
                 onChange={(e) => setBearerToken(e.target.value)}
                 disabled={saving || clearToken}
-                placeholder="Dejar vacío para no cambiar"
+                placeholder={t("projects.bearerPlaceholder")}
               />
-              <p className="text-[11px] text-muted-foreground">
-                Mínimo 8 caracteres si lo cambias. Sustituye el token anterior cifrado.
-              </p>
+              <p className="text-[11px] text-muted-foreground">{t("projects.bearerEditHint")}</p>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -234,11 +233,11 @@ export function EditProjectDialog({
                 disabled={saving}
               />
               <Label htmlFor="edit-clear-bearer" className="text-sm font-normal cursor-pointer">
-                Eliminar token guardado (el agregador dejará de autenticarse hasta que configures uno nuevo)
+                {t("projects.clearBearer")}
               </Label>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-desc">Descripción</Label>
+              <Label htmlFor="edit-desc">{t("projects.descriptionLabel")}</Label>
               <Textarea
                 id="edit-desc"
                 rows={2}
@@ -248,7 +247,7 @@ export function EditProjectDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-icon">Icono (emoji)</Label>
+              <Label htmlFor="edit-icon">{t("projects.iconLabel")}</Label>
               <Input
                 id="edit-icon"
                 value={icon}
@@ -268,10 +267,10 @@ export function EditProjectDialog({
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Guardando…
+                    {t("projects.saving")}
                   </>
                 ) : (
-                  "Guardar cambios"
+                  t("projects.saveChanges")
                 )}
               </Button>
             </DialogFooter>

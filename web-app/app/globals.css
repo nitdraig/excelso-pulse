@@ -52,8 +52,9 @@
   --secondary-foreground: oklch(0.95 0 0);
   --muted: oklch(0.22 0.01 260);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.65 0.2 180);
-  --accent-foreground: oklch(0.12 0.01 260);
+  /* Superficie de hover/focus: evita parches semitransparentes que dejan ver el fondo */
+  --accent: oklch(0.24 0.02 260);
+  --accent-foreground: oklch(0.96 0 0);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.95 0 0);
   --border: oklch(0.25 0.02 260);
@@ -121,5 +122,19 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /*
+    Select nativo (p. ej. /alerts): en Chrome/Windows el menú del SO puede usar
+    fondo claro mientras el texto hereda color claro del tema oscuro → opciones
+    ilegibles. Forzar fondo y color con variables del tema en <option>.
+  */
+  select option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+
+  .dark select {
+    color-scheme: dark;
   }
 }

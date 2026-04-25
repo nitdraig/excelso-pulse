@@ -3,8 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Terminal, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { BrandMark } from "@/components/brand-mark"
+import { useTranslation } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
+import { PasswordInput } from "@/components/auth/password-input"
+import { SKIPY_WEB } from "@/lib/ecosystem-urls"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -17,6 +21,7 @@ import {
 } from "@/components/ui/card"
 
 export function RegisterForm() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -40,7 +45,7 @@ export function RegisterForm() {
       })
       const data = (await res.json()) as { error?: string }
       if (!res.ok) {
-        setError(data.error ?? "No se pudo registrar la cuenta.")
+        setError(data.error ?? t("register.error"))
         return
       }
       router.push("/login?registered=1")
@@ -53,20 +58,18 @@ export function RegisterForm() {
   return (
     <Card className="w-full max-w-md border-border/80 bg-card/80 shadow-lg backdrop-blur-sm">
       <CardHeader className="space-y-4 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
-          <Terminal className="h-7 w-7 text-primary" />
+        <div className="mx-auto flex justify-center">
+          <BrandMark size={56} alt={t("brand.logoAlt")} />
         </div>
         <div>
-          <CardTitle className="text-xl tracking-tight">Crear cuenta</CardTitle>
-          <CardDescription className="text-balance pt-1">
-            Los datos se guardan en MongoDB. Usa una contraseña de al menos 8 caracteres.
-          </CardDescription>
+          <CardTitle className="text-xl tracking-tight">{t("register.title")}</CardTitle>
+          <CardDescription className="text-balance pt-1">{t("register.subtitle")}</CardDescription>
         </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor="name">{t("register.name")}</Label>
             <Input
               id="name"
               name="name"
@@ -79,7 +82,7 @@ export function RegisterForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Correo</Label>
+            <Label htmlFor="email">{t("register.email")}</Label>
             <Input
               id="email"
               name="email"
@@ -93,11 +96,10 @@ export function RegisterForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <Label htmlFor="password">{t("register.password")}</Label>
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               required
               minLength={8}
@@ -106,6 +108,18 @@ export function RegisterForm() {
               disabled={pending}
               className="bg-background/50"
             />
+            <p className="text-xs text-muted-foreground">
+              <a
+                href={SKIPY_WEB}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                {t("authPages.skipyPasswordLink")} ↗
+              </a>
+              <span className="mx-1.5 text-border">—</span>
+              <span>{t("authPages.skipyPasswordHint")}</span>
+            </p>
           </div>
           {error ? (
             <p className="text-sm text-destructive" role="alert">
@@ -118,16 +132,16 @@ export function RegisterForm() {
             {pending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Creando cuenta…
+                {t("register.submitting")}
               </>
             ) : (
-              "Registrarme"
+              t("register.submit")
             )}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            ¿Ya tienes cuenta?{" "}
+            {t("register.hasAccount")}{" "}
             <Link href="/login" className="text-primary underline-offset-4 hover:underline">
-              Iniciar sesión
+              {t("register.signIn")}
             </Link>
           </p>
         </CardFooter>

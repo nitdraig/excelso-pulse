@@ -10,6 +10,7 @@ import {
   Activity,
   ExternalLink,
 } from "lucide-react"
+import { useTranslation } from "@/components/i18n-provider"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { PulsePresentationBadge } from "./pulse-presentation-badge"
 import { AppPulse } from "@/lib/types"
@@ -45,15 +46,19 @@ function databaseDisplayName(db: AppPulse["infrastructure"]["database"]) {
   return null
 }
 
-function dbStatusLabel(app: AppPulse): string {
+function dbStatusLabel(app: AppPulse, t: (path: string) => string): string {
   if (app.readiness === "starting" && app.user_impact === "none" && app.infrastructure.db_status === "degraded") {
-    return "conectando…"
+    return t("appCard.dbConnecting")
   }
-  if (app.infrastructure.db_status === "unknown") return "sin informar"
-  return app.infrastructure.db_status
+  if (app.infrastructure.db_status === "unknown") return t("appCard.dbNotReported")
+  const key = app.infrastructure.db_status
+  return t(`appCard.dbStatus.${key}`)
 }
 
 export function AppCard({ app, onClick }: AppCardProps) {
+  const { t, locale } = useTranslation()
+  const localeTag = locale === "es" ? "es-ES" : "en-US"
+
   const latencyColor =
     app.metrics.latency_ms < 100
       ? "text-emerald-400"
@@ -73,14 +78,15 @@ export function AppCard({ app, onClick }: AppCardProps) {
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:border-primary/40 hover:bg-card/80",
+        "cursor-pointer border border-transparent transition-colors duration-200",
+        "hover:border-primary/35 hover:bg-muted/40 dark:hover:border-primary/45 dark:hover:bg-muted/55",
         "group relative overflow-hidden",
         presentationBorder,
         !presentationBorder && app.status === "unavailable" && "border-border/80 opacity-90",
       )}
       onClick={onClick}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-primary/10" />
 
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
@@ -100,7 +106,7 @@ export function AppCard({ app, onClick }: AppCardProps) {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ExternalLink className="h-3 w-3 shrink-0" />
-                  <span className="truncate">App (front)</span>
+                  <span className="truncate">{t("appCard.appFront")}</span>
                 </a>
               ) : null}
             </div>
@@ -114,12 +120,11 @@ export function AppCard({ app, onClick }: AppCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Technical Metrics */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
             <Activity className="w-4 h-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Latency</p>
+              <p className="text-xs text-muted-foreground">{t("appCard.latency")}</p>
               <p className={cn("text-sm font-mono font-semibold", latencyColor)}>
                 {app.metrics.latency_ms}ms
               </p>
@@ -129,8 +134,7 @@ export function AppCard({ app, onClick }: AppCardProps) {
             <Database className="w-4 h-4 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">
-                {databaseDisplayName(app.infrastructure.database) ??
-                  "Base de datos (origen)"}
+                {databaseDisplayName(app.infrastructure.database) ?? t("appCard.dbOriginLabel")}
               </p>
               <p
                 className={cn(
@@ -144,16 +148,15 @@ export function AppCard({ app, onClick }: AppCardProps) {
                         : "text-muted-foreground",
                 )}
               >
-                {dbStatusLabel(app)}
+                {dbStatusLabel(app, t)}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Business KPIs */}
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Business KPIs
+            {t("appCard.kpis")}
           </p>
           <div className="grid grid-cols-3 gap-2">
             {app.kpis.map((kpi, index) => (
@@ -168,43 +171,42 @@ export function AppCard({ app, onClick }: AppCardProps) {
           </div>
         </div>
 
-        {/* Infrastructure Icons */}
         <div className="flex items-center gap-2 pt-2 border-t border-border">
-          <p className="text-xs text-muted-foreground mr-auto">Infrastructure</p>
+          <p className="text-xs text-muted-foreground mr-auto">{t("appCard.infrastructure")}</p>
           <div
             className={cn(
               "flex items-center justify-center w-6 h-6 rounded",
-              app.infrastructure.vercel ? "bg-primary/10" : "bg-secondary"
+              app.infrastructure.vercel ? "bg-primary/10" : "bg-secondary",
             )}
-            title="Vercel"
+            title={t("appCard.titleVercel")}
           >
             <Cloud
               className={cn(
                 "w-3.5 h-3.5",
-                app.infrastructure.vercel ? "text-primary" : "text-muted-foreground"
+                app.infrastructure.vercel ? "text-primary" : "text-muted-foreground",
               )}
             />
           </div>
           <div
             className={cn(
               "flex items-center justify-center w-6 h-6 rounded",
-              app.infrastructure.ai_api ? "bg-primary/10" : "bg-secondary"
+              app.infrastructure.ai_api ? "bg-primary/10" : "bg-secondary",
             )}
-            title="AI API"
+            title={t("appCard.titleAi")}
           >
             <Cpu
               className={cn(
                 "w-3.5 h-3.5",
-                app.infrastructure.ai_api ? "text-primary" : "text-muted-foreground"
+                app.infrastructure.ai_api ? "text-primary" : "text-muted-foreground",
               )}
             />
           </div>
           <div
             className={cn(
               "flex items-center justify-center w-6 h-6 rounded",
-              app.infrastructure.db_status === "connected" ? "bg-primary/10" : "bg-secondary"
+              app.infrastructure.db_status === "connected" ? "bg-primary/10" : "bg-secondary",
             )}
-            title="Database"
+            title={t("appCard.titleDatabase")}
           >
             <Database
               className={cn(
@@ -215,17 +217,16 @@ export function AppCard({ app, onClick }: AppCardProps) {
                     ? "text-amber-400"
                     : dbStatusTone(app.infrastructure.db_status, app) === "err"
                       ? "text-red-400"
-                      : "text-muted-foreground"
+                      : "text-muted-foreground",
               )}
             />
           </div>
         </div>
 
-        {/* Version */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>v{app.pulse_version}</span>
           <span>
-            {new Date(app.last_updated).toLocaleTimeString("en-US", {
+            {new Date(app.last_updated).toLocaleTimeString(localeTag, {
               hour: "2-digit",
               minute: "2-digit",
             })}

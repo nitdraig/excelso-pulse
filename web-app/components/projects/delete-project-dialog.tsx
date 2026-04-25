@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Loader2, Trash2 } from "lucide-react"
+import { useTranslation } from "@/components/i18n-provider"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -28,6 +29,7 @@ export function DeleteProjectDialog({
   onOpenChange,
   onSuccess,
 }: DeleteProjectDialogProps) {
+  const { t } = useTranslation()
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,7 +43,7 @@ export function DeleteProjectDialog({
       })
       const data = (await res.json()) as { error?: string }
       if (!res.ok) {
-        setError(data.error ?? "No se pudo eliminar.")
+        setError(data.error ?? t("projects.deleteError"))
         return
       }
       onOpenChange(false)
@@ -51,19 +53,20 @@ export function DeleteProjectDialog({
     }
   }
 
+  const displayName = projectName ?? apiPathKey ?? ""
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <Trash2 className="h-5 w-5 text-destructive" />
-            ¿Eliminar origen?
+            {t("projects.deleteTitle")}
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <span>
-              Se borrará el registro{" "}
-              <strong className="text-foreground">{projectName ?? apiPathKey}</strong> en MongoDB, incluido el
-              token cifrado si existía.
+              {t("projects.deleteIntro")}{" "}
+              <strong className="text-foreground">{displayName}</strong> {t("projects.deleteOutro")}
             </span>
             {error ? (
               <span className="block text-destructive text-sm">{error}</span>
@@ -71,7 +74,7 @@ export function DeleteProjectDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>{t("projects.deleteCancel")}</AlertDialogCancel>
           <Button
             type="button"
             variant="destructive"
@@ -81,10 +84,10 @@ export function DeleteProjectDialog({
             {pending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Eliminando…
+                {t("projects.deleteWorking")}
               </>
             ) : (
-              "Eliminar"
+              t("projects.deleteConfirm")
             )}
           </Button>
         </AlertDialogFooter>

@@ -1,8 +1,35 @@
 import { z } from "zod"
+import { PROJECT_ALERT_RULE_TYPES } from "@/lib/alerts/project-alert-rules"
+import { ensureHttpsUrl } from "@/lib/url"
 
 export const registerBodySchema = z.object({
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(254),
+  password: z.string().min(8).max(128),
+})
+
+export const patchAccountBodySchema = z.object({
+  firstName: z.string().trim().max(80).optional(),
+  lastName: z.string().trim().max(80).optional(),
+  organizationName: z.string().trim().max(160).optional(),
+  email: z.string().trim().email().max(254).optional(),
+})
+
+export const changePasswordBodySchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(8).max(128),
+})
+
+export const deleteAccountBodySchema = z.object({
+  password: z.string().min(1).max(128),
+})
+
+export const forgotPasswordBodySchema = z.object({
+  email: z.string().trim().email().max(254),
+})
+
+export const resetPasswordBodySchema = z.object({
+  token: z.string().trim().min(32).max(128),
   password: z.string().min(8).max(128),
 })
 
@@ -15,6 +42,47 @@ const slugSchema = z
     /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
     "Solo minúsculas, números y guiones (sin empezar/terminar en guión).",
   )
+
+const alertRuleTypeSchema = z.enum(PROJECT_ALERT_RULE_TYPES)
+
+export const createProjectAlertBodySchema = z
+  .object({
+    projectSlug: slugSchema,
+    label: z.string().trim().min(1).max(120),
+    ruleType: alertRuleTypeSchema,
+    threshold: z.number().min(0).nullable().optional(),
+    enabled: z.boolean().optional().default(true),
+  })
+  .superRefine((data, ctx) => {
+    if (data.ruleType === "latency_above" || data.ruleType === "error_rate_above") {
+      if (data.threshold == null || Number.isNaN(data.threshold)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Umbral requerido para este tipo de alerta.",
+          path: ["threshold"],
+        })
+        return
+      }
+      if (data.ruleType === "error_rate_above" && data.threshold > 100) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "La tasa de error debe ser ≤ 100.",
+          path: ["threshold"],
+        })
+      }
+    }
+  })
+
+export const patchProjectAlertBodySchema = z
+  .object({
+    label: z.string().trim().min(1).max(120).optional(),
+    ruleType: alertRuleTypeSchema.optional(),
+    threshold: z.number().min(0).nullable().optional(),
+    enabled: z.boolean().optional(),
+  })
+  .refine((d) => Object.keys(d).some((k) => d[k as keyof typeof d] !== undefined), {
+    message: "Envía al menos un campo a actualizar.",
+  })
 
 function refineNonEmptyAppUrl(val: string, ctx: z.RefinementCtx) {
   if (!val) return
@@ -32,7 +100,11 @@ const createAppUrlSchema = z
   .trim()
   .max(2048)
   .optional()
-  .transform((s) => s ?? "")
+  .transform((s) => {
+    const v = s ?? ""
+    if (!v) return ""
+    return ensureHttpsUrl(v)
+  })
   .superRefine(refineNonEmptyAppUrl)
 
 /** Actualización: omitir clave = sin cambio; "" borra el enlace. */
@@ -41,6 +113,11 @@ const patchAppUrlSchema = z
   .trim()
   .max(2048)
   .optional()
+  .transform((val) => {
+    if (val === undefined) return undefined
+    if (val === "") return ""
+    return ensureHttpsUrl(val)
+  })
   .superRefine((val, ctx) => {
     if (val === undefined) return
     refineNonEmptyAppUrl(val, ctx)
@@ -57,7 +134,11 @@ export const createProjectBodySchema = z.object({
   description: z.string().trim().max(2000).optional().default(""),
   icon: z.string().trim().max(8).optional().default("📦"),
   appUrl: createAppUrlSchema,
-  pulseUrl: z.string().trim().url().max(2048),
+  pulseUrl: z
+    .string()
+    .trim()
+    .transform(ensureHttpsUrl)
+    .pipe(z.string().url().max(2048)),
   /** Token Bearer del backend; se cifra antes de guardar (no se devuelve en GET). */
   bearerToken: z.string().min(8).max(8192),
 })
@@ -69,7 +150,12 @@ export const updateProjectBodySchema = z
     description: z.string().trim().max(2000).optional(),
     icon: z.string().trim().max(8).optional(),
     appUrl: patchAppUrlSchema,
-    pulseUrl: z.string().trim().url().max(2048).optional(),
+    pulseUrl: z
+      .string()
+      .trim()
+      .transform((s) => (s === "" ? s : ensureHttpsUrl(s)))
+      .pipe(z.string().url().max(2048))
+      .optional(),
     bearerToken: bearerTokenUpdate,
     /** Si es true, borra token cifrado y referencia env legada. */
     clearBearer: z.literal(true).optional(),

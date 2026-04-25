@@ -3,15 +3,16 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { auth } from '@/auth'
 import { AuthSessionProvider } from '@/components/auth/session-provider'
+import { I18nProvider } from '@/components/i18n-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Excelso Command Center | AI-Driven Project Management',
-  description: 'Centralized observability dashboard for Fuddy, JEMA, Skipy, and Mining Talent Net ecosystems',
-  generator: 'v0.app',
+  title: "Excelso Pulse",
+  description:
+    "Command center for the Excelso ecosystem: aggregate health and business signals from product backends, store encrypted secrets in MongoDB, and monitor everything in one dashboard.",
   icons: {
     icon: [
       {
@@ -41,9 +42,11 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark bg-background" suppressHydrationWarning>
       <body className="font-sans antialiased" suppressHydrationWarning>
-        <AuthSessionProvider session={session}>
-          {children}
-        </AuthSessionProvider>
+        <I18nProvider>
+          <AuthSessionProvider session={session}>
+            {children}
+          </AuthSessionProvider>
+        </I18nProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

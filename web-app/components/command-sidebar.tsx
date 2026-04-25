@@ -1,6 +1,9 @@
 "use client"
 
-import { Settings, LayoutGrid, Activity, Bell, ChevronLeft } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { LayoutGrid, Bell, ChevronLeft, UserRound } from "lucide-react"
+import { useTranslation } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
@@ -23,16 +26,19 @@ export function CommandSidebar({
   isCollapsed,
   onToggleCollapse,
 }: CommandSidebarProps) {
+  const { t } = useTranslation()
+  const pathname = usePathname()
+
   return (
     <aside
       className={cn(
         "hidden lg:flex flex-col border-r border-border bg-sidebar transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
+        isCollapsed ? "w-16" : "w-64",
       )}
     >
       <div className="flex items-center justify-between p-4">
         {!isCollapsed && (
-          <h2 className="text-sm font-semibold text-sidebar-foreground">Portfolio</h2>
+          <h2 className="text-sm font-semibold text-sidebar-foreground">{t("sidebar.portfolio")}</h2>
         )}
         <Button
           variant="ghost"
@@ -52,12 +58,12 @@ export function CommandSidebar({
             variant="ghost"
             className={cn(
               "w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent",
-              !selectedApp && "bg-sidebar-accent"
+              !selectedApp && "bg-sidebar-accent",
             )}
             onClick={() => onSelectApp("")}
           >
             <LayoutGrid className="h-4 w-4 shrink-0" />
-            {!isCollapsed && <span>All Applications</span>}
+            {!isCollapsed && <span>{t("sidebar.allApps")}</span>}
           </Button>
 
           <Separator className="my-3 bg-sidebar-border" />
@@ -68,7 +74,7 @@ export function CommandSidebar({
               variant="ghost"
               className={cn(
                 "w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent",
-                selectedApp === app.id && "bg-sidebar-accent"
+                selectedApp === app.id && "bg-sidebar-accent",
               )}
               onClick={() => onSelectApp(app.id)}
             >
@@ -89,30 +95,33 @@ export function CommandSidebar({
         </div>
       </ScrollArea>
 
-      <div className="p-2 border-t border-sidebar-border">
-        <div className="space-y-1">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <Activity className="h-4 w-4 shrink-0" />
-            {!isCollapsed && <span>Probe Config</span>}
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent"
-          >
+      <div className="space-y-1 border-t border-sidebar-border p-2">
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent",
+            pathname.startsWith("/alerts") && "bg-sidebar-accent",
+          )}
+          asChild
+        >
+          <Link href="/alerts" title={t("sidebar.alertsHint")}>
             <Bell className="h-4 w-4 shrink-0" />
-            {!isCollapsed && <span>Alerts</span>}
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <Settings className="h-4 w-4 shrink-0" />
-            {!isCollapsed && <span>Settings</span>}
-          </Button>
-        </div>
+            {!isCollapsed && <span>{t("sidebar.alerts")}</span>}
+          </Link>
+        </Button>
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent",
+            pathname.startsWith("/account") && "bg-sidebar-accent",
+          )}
+          asChild
+        >
+          <Link href="/account" title={t("sidebar.accountHint")}>
+            <UserRound className="h-4 w-4 shrink-0" />
+            {!isCollapsed && <span>{t("sidebar.account")}</span>}
+          </Link>
+        </Button>
       </div>
     </aside>
   )

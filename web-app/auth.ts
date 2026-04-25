@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import type { SessionUserPayload } from "@/lib/auth/session-user"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -16,17 +17,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email.trim() || !password) return null
 
         const { authenticateUser } = await import("@/lib/auth/authenticate-user")
-        return authenticateUser(email, password)
+        const user = await authenticateUser(email, password)
+        return user as SessionUserPayload | null
       },
     }),
   ],
   pages: { signIn: "/login" },
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
-        token.sub = user.id
-        token.name = user.name
-        if ("email" in user && user.email) token.email = user.email
+        const u = user as SessionUserPayload
+        token.sub = u.id
+        token.name = u.name
+        token.email = u.email
+        token.firstName = u.firstName
+        token.lastName = u.lastName
+        token.organizationName = u.organizationName
+      }
+      if (trigger === "update" && session?.user) {
+        const u = session.user as Record<string, string | undefined>
+        if (typeof u.name === "string") token.name = u.name
+        if (typeof u.email === "string") token.email = u.email
+        if (typeof u.firstName === "string") token.firstName = u.firstName
+        if (typeof u.lastName === "string") token.lastName = u.lastName
+        if (typeof u.organizationName === "string") {
+          token.organizationName = u.organizationName
+        }
       }
       return token
     },
@@ -35,6 +51,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub ?? ""
         session.user.name = (token.name as string) ?? session.user.name ?? ""
         session.user.email = (token.email as string) ?? ""
+        session.user.firstName = (token.firstName as string) ?? ""
+        session.user.lastName = (token.lastName as string) ?? ""
+        session.user.organizationName = (token.organizationName as string) ?? ""
       }
       return session
     },

@@ -25,10 +25,14 @@ export async function POST(req: Request) {
   try {
     await connectDB()
     const passwordHash = await bcrypt.hash(password, 12)
+    const trimmed = name.trim()
     await UserModel.create({
-      name,
+      name: trimmed,
       email: email.toLowerCase(),
       passwordHash,
+      firstName: trimmed,
+      lastName: "",
+      organizationName: "",
     })
   } catch (e: unknown) {
     const code = (e as { code?: number })?.code

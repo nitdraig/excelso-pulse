@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { FolderPlus, Loader2 } from "lucide-react"
+import { useTranslation } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,13 +16,26 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ensureHttpsUrl } from "@/lib/url"
 
 type CreateProjectDialogProps = {
   onSuccess?: () => void
+  /** Modo controlado (barra móvil + escritorio). Si se omite `onOpenChange`, el diálogo gestiona su propio estado y muestra el trigger por defecto. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
-  const [open, setOpen] = useState(false)
+export function CreateProjectDialog({
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange,
+}: CreateProjectDialogProps) {
+  const { t } = useTranslation()
+  const isControlled = onOpenChange != null
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = isControlled ? (controlledOpen ?? false) : internalOpen
+  const setOpen = isControlled ? onOpenChange! : setInternalOpen
+
   const [slug, setSlug] = useState("")
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -45,14 +59,14 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
           name: name.trim(),
           description: description.trim(),
           icon: icon.trim() || "📦",
-          appUrl: appUrl.trim(),
-          pulseUrl: pulseUrl.trim(),
+          appUrl: ensureHttpsUrl(appUrl),
+          pulseUrl: ensureHttpsUrl(pulseUrl),
           bearerToken: bearerToken.trim(),
         }),
       })
       const data = (await res.json()) as { error?: string }
       if (!res.ok) {
-        setError(data.error ?? "No se pudo crear el origen.")
+        setError(data.error ?? t("projects.createError"))
         return
       }
       setOpen(false)
@@ -71,24 +85,23 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2 shrink-0">
-          <FolderPlus className="h-4 w-4" />
-          Nuevo origen
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      {!isControlled ? (
+        <DialogTrigger asChild>
+          <Button size="sm" className="gap-2 shrink-0">
+            <FolderPlus className="h-4 w-4" />
+            {t("projects.newSource")}
+          </Button>
+        </DialogTrigger>
+      ) : null}
+      <DialogContent className="max-h-[min(90vh,720px)] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Registrar origen pulse</DialogTitle>
-          <DialogDescription>
-            El token se <strong>cifra</strong> en el servidor antes de guardarse. En el navegador no se vuelve a
-            mostrar. Requiere <code className="text-xs">PULSE_SECRETS_MASTER_KEY</code> en el despliegue de Pulse.
-          </DialogDescription>
+          <DialogTitle>{t("projects.createTitle")}</DialogTitle>
+          <DialogDescription>{t("projects.createDescription")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-1">
-              <Label htmlFor="proj-slug">Slug (appId)</Label>
+              <Label htmlFor="proj-slug">{t("projects.slugLabel")}</Label>
               <Input
                 id="proj-slug"
                 required
@@ -97,53 +110,51 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
                   setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
                 }
                 disabled={pending}
-                placeholder="fuddy"
+                placeholder="my-api"
                 autoComplete="off"
               />
-              <p className="text-[11px] text-muted-foreground leading-snug">
-                Debe coincidir con el identificador que uses al agregar; minúsculas y guiones.
-              </p>
+              <p className="text-[11px] text-muted-foreground leading-snug">{t("projects.slugHint")}</p>
             </div>
             <div className="space-y-2 sm:col-span-1">
-              <Label htmlFor="proj-name">Nombre visible</Label>
+              <Label htmlFor="proj-name">{t("projects.nameLabel")}</Label>
               <Input
                 id="proj-name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={pending}
-                placeholder="Fuddy"
+                placeholder="My product"
               />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="proj-app-url">URL de la app (front)</Label>
+            <Label htmlFor="proj-app-url">{t("projects.appUrlLabel")}</Label>
             <Input
               id="proj-app-url"
               type="url"
               value={appUrl}
               onChange={(e) => setAppUrl(e.target.value)}
+              onBlur={() => setAppUrl((u) => ensureHttpsUrl(u))}
               disabled={pending}
-              placeholder="https://app.fuddy.example.com"
+              placeholder="https://app.example.com"
             />
-            <p className="text-[11px] text-muted-foreground leading-snug">
-              Opcional. Enlace público que verás en el panel.
-            </p>
+            <p className="text-[11px] text-muted-foreground leading-snug">{t("projects.appUrlHint")}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="proj-pulse-url">URL pulse del backend</Label>
+            <Label htmlFor="proj-pulse-url">{t("projects.pulseUrlLabel")}</Label>
             <Input
               id="proj-pulse-url"
               type="url"
               required
               value={pulseUrl}
               onChange={(e) => setPulseUrl(e.target.value)}
+              onBlur={() => setPulseUrl((u) => ensureHttpsUrl(u))}
               disabled={pending}
-              placeholder="https://api-fuddy.example.com/internal/pulse"
+              placeholder="https://api.example.com/internal/pulse"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="proj-bearer">Token Bearer (backend)</Label>
+            <Label htmlFor="proj-bearer">{t("projects.bearerLabel")}</Label>
             <Input
               id="proj-bearer"
               type="password"
@@ -154,23 +165,21 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
               disabled={pending}
               placeholder="••••••••"
             />
-            <p className="text-[11px] text-muted-foreground leading-snug">
-              Mínimo 8 caracteres. Solo el agregador lo usa al llamar al pulse; se guarda cifrado (AES-256-GCM).
-            </p>
+            <p className="text-[11px] text-muted-foreground leading-snug">{t("projects.bearerHint")}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="proj-desc">Descripción</Label>
+            <Label htmlFor="proj-desc">{t("projects.descriptionLabel")}</Label>
             <Textarea
               id="proj-desc"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={pending}
-              placeholder="Qué producto o API representa este origen"
+              placeholder={t("projects.descriptionPlaceholder")}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="proj-icon">Icono (emoji)</Label>
+            <Label htmlFor="proj-icon">{t("projects.iconLabel")}</Label>
             <Input
               id="proj-icon"
               value={icon}
@@ -185,15 +194,15 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
               {error}
             </p>
           ) : null}
-          <DialogFooter>
-            <Button type="submit" disabled={pending} className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="submit" disabled={pending} className="w-full gap-2 sm:w-auto">
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Guardando…
+                  {t("projects.saving")}
                 </>
               ) : (
-                "Guardar origen"
+                t("projects.saveSource")
               )}
             </Button>
           </DialogFooter>

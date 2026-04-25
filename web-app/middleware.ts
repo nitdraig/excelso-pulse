@@ -7,7 +7,15 @@ export default auth((req) => {
     pathname === "/login" ||
     pathname.startsWith("/login/") ||
     pathname === "/register" ||
-    pathname.startsWith("/register/")
+    pathname.startsWith("/register/") ||
+    pathname === "/forgot-password" ||
+    pathname.startsWith("/forgot-password/") ||
+    pathname === "/reset-password" ||
+    pathname.startsWith("/reset-password/")
+  const isPublicDocs =
+    pathname === "/docs" || pathname.startsWith("/docs/")
+  /** Marketing / landing: solo invitados (sesión redirige en la página y aquí). */
+  const isGuestLanding = pathname === "/"
   const isPublicAsset =
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/register") ||
@@ -16,14 +24,18 @@ export default auth((req) => {
 
   if (isPublicAsset) return NextResponse.next()
 
-  if (!req.auth && !isAuthPage) {
+  if (req.auth && isGuestLanding) {
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin))
+  }
+
+  if (!req.auth && !isAuthPage && !isPublicDocs && !isGuestLanding) {
     const url = new URL("/login", req.nextUrl.origin)
     url.searchParams.set("callbackUrl", pathname + req.nextUrl.search)
     return NextResponse.redirect(url)
   }
 
   if (req.auth && isAuthPage) {
-    return NextResponse.redirect(new URL("/", req.nextUrl.origin))
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin))
   }
 
   return NextResponse.next()

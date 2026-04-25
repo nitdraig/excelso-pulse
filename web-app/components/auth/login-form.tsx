@@ -4,8 +4,11 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
-import { Terminal, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { BrandMark } from "@/components/brand-mark"
+import { useTranslation } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
+import { PasswordInput } from "@/components/auth/password-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -18,16 +21,16 @@ import {
 } from "@/components/ui/card"
 
 export function LoginForm() {
+  const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
   const registeredOk = searchParams.get("registered") === "1"
+  const resetOk = searchParams.get("reset") === "1"
   const rawCallback = searchParams.get("callbackUrl")
   const callbackUrl =
-    rawCallback &&
-    rawCallback.startsWith("/") &&
-    !rawCallback.startsWith("//")
+    rawCallback && rawCallback.startsWith("/") && !rawCallback.startsWith("//")
       ? rawCallback
-      : "/"
+      : "/dashboard"
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -46,10 +49,10 @@ export function LoginForm() {
         callbackUrl,
       })
       if (res?.error) {
-        setError("Correo o contraseña incorrectos.")
+        setError(t("login.wrongCredentials"))
         return
       }
-      router.push(callbackUrl.startsWith("/") ? callbackUrl : "/")
+      router.push(callbackUrl.startsWith("/") ? callbackUrl : "/dashboard")
       router.refresh()
     } finally {
       setPending(false)
@@ -59,20 +62,18 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md border-border/80 bg-card/80 shadow-lg backdrop-blur-sm">
       <CardHeader className="space-y-4 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
-          <Terminal className="h-7 w-7 text-primary" />
+        <div className="mx-auto flex justify-center">
+          <BrandMark size={56} alt={t("brand.logoAlt")} />
         </div>
         <div>
-          <CardTitle className="text-xl tracking-tight">Excelso Pulse</CardTitle>
-          <CardDescription className="text-balance pt-1">
-            Accede con tu cuenta de Excelso Pulse.
-          </CardDescription>
+          <CardTitle className="text-xl tracking-tight">{t("login.title")}</CardTitle>
+          <CardDescription className="text-balance pt-1">{t("login.subtitle")}</CardDescription>
         </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Correo</Label>
+            <Label htmlFor="email">{t("login.email")}</Label>
             <Input
               id="email"
               name="email"
@@ -86,11 +87,18 @@ export function LoginForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="password">{t("login.password")}</Label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-primary underline-offset-4 hover:underline"
+              >
+                {t("login.forgotPassword")}
+              </Link>
+            </div>
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="current-password"
               required
               value={password}
@@ -101,7 +109,12 @@ export function LoginForm() {
           </div>
           {registeredOk ? (
             <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-              Cuenta creada. Inicia sesión con tu correo y contraseña.
+              {t("login.registered")}
+            </p>
+          ) : null}
+          {resetOk ? (
+            <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
+              {t("login.passwordResetDone")}
             </p>
           ) : null}
           {error ? (
@@ -115,16 +128,16 @@ export function LoginForm() {
             {pending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Entrando…
+                {t("login.submitting")}
               </>
             ) : (
-              "Entrar al panel"
+              t("login.submit")
             )}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            ¿Sin cuenta?{" "}
+            {t("login.noAccount")}{" "}
             <Link href="/register" className="text-primary underline-offset-4 hover:underline">
-              Crear cuenta
+              {t("login.createAccount")}
             </Link>
           </p>
         </CardFooter>
