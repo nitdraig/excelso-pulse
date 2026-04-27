@@ -51,17 +51,40 @@ export async function POST(req: Request) {
     const resetUrl = `${origin}/reset-password?token=${encodeURIComponent(token)}`
 
     const accept = req.headers.get("accept-language") ?? ""
-    const es = accept.toLowerCase().includes("es")
+    const preferredLocale = parsed.data.locale
+    const es = preferredLocale ? preferredLocale === "es" : accept.toLowerCase().includes("es")
     const subject = es
       ? "Restablecer contraseña — Excelso Pulse"
       : "Reset your password — Excelso Pulse"
-    const html = es
-      ? `<p>Solicitaste restablecer tu contraseña en Excelso Pulse.</p>
-         <p><a href="${resetUrl}">Restablecer contraseña</a></p>
-         <p style="font-size:12px;color:#666">Si no fuiste tú, ignora este correo. Caduca en 1 hora.</p>`
-      : `<p>You asked to reset your Excelso Pulse password.</p>
-         <p><a href="${resetUrl}">Reset password</a></p>
-         <p style="font-size:12px;color:#666">If you did not request this, ignore this email. Link expires in 1 hour.</p>`
+    const ctaLabel = es ? "Restablecer contraseña" : "Reset password"
+    const title = es ? "Recuperación de contraseña" : "Password recovery"
+    const intro = es
+      ? "Recibimos una solicitud para restablecer tu contraseña de Excelso Pulse."
+      : "We received a request to reset your Excelso Pulse password."
+    const hint = es
+      ? "Este enlace caduca en 1 hora. Si no solicitaste este cambio, puedes ignorar este correo."
+      : "This link expires in 1 hour. If you did not request this change, you can safely ignore this email."
+    const support = es
+      ? "Si el botón no funciona, copia y pega este enlace en tu navegador:"
+      : "If the button does not work, copy and paste this link in your browser:"
+    const logoUrl = `${origin}/web-app-manifest-192x192.png`
+    const html = `
+      <div style="margin:0 auto;max-width:600px;padding:24px;background:#f8fafc">
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:28px">
+          <div style="text-align:center;margin-bottom:20px">
+            <img src="${logoUrl}" alt="Excelso Pulse" width="56" height="56" style="display:inline-block;border-radius:14px;border:1px solid #dbeafe;background:#eff6ff" />
+          </div>
+          <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#0f172a;text-align:center">${title}</h1>
+          <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;text-align:center">${intro}</p>
+          <div style="text-align:center;margin:0 0 20px">
+            <a href="${resetUrl}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#ffffff !important;text-decoration:none;border-radius:10px;font-weight:600">${ctaLabel}</a>
+          </div>
+          <p style="margin:0 0 12px;color:#64748b;font-size:13px;line-height:1.6">${hint}</p>
+          <p style="margin:0 0 8px;color:#334155;font-size:13px;line-height:1.6">${support}</p>
+          <p style="margin:0;padding:10px 12px;border-radius:8px;background:#f1f5f9;color:#0f172a;font-size:12px;line-height:1.55;word-break:break-all">${resetUrl}</p>
+        </div>
+      </div>
+    `
 
     const mail = await sendPasswordResetEmail({ to: email, resetUrl, subject, html })
 

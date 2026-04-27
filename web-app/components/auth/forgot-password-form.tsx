@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export function ForgotPasswordForm() {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const [email, setEmail] = useState("")
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +39,7 @@ export function ForgotPasswordForm() {
           "Content-Type": "application/json",
           "Accept-Language": document.documentElement.lang || "es",
         },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), locale }),
       })
       const data = (await res.json()) as {
         ok?: boolean

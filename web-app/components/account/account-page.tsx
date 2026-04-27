@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { signOut, useSession } from "next-auth/react"
-import { Loader2, LogOut } from "lucide-react"
+import { Copy, KeyRound, Loader2, LogOut, RefreshCw, Trash2 } from "lucide-react"
 import { AppSubHeader } from "@/components/app-sub-header"
 import { MobileTabBar } from "@/components/mobile-tab-bar"
 import { useTranslation } from "@/components/i18n-provider"
@@ -24,6 +24,14 @@ type ProfileDto = {
   firstName: string
   lastName: string
   organizationName: string
+}
+
+type VoiceTokenStatusDto = {
+  configured: boolean
+  active: boolean
+  label: string
+  lastUsedAt: string | null
+  updatedAt: string | null
 }
 
 export function AccountPage() {
@@ -54,6 +62,19 @@ export function AccountPage() {
   const [deleteWorking, setDeleteWorking] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  const [voiceLoading, setVoiceLoading] = useState(true)
+  const [voiceStatus, setVoiceStatus] = useState<VoiceTokenStatusDto | null>(null)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
+  const [voiceMessage, setVoiceMessage] = useState<string | null>(null)
+
+  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
+  const [voiceCreating, setVoiceCreating] = useState(false)
+  const [createdVoiceToken, setCreatedVoiceToken] = useState<string>("")
+  const [voiceCopyMessage, setVoiceCopyMessage] = useState<string | null>(null)
+
+  const [voiceDeleteOpen, setVoiceDeleteOpen] = useState(false)
+  const [voiceDeleting, setVoiceDeleting] = useState(false)
+
   const loadProfile = useCallback(async () => {
     setLoadError(null)
     setLoading(true)
@@ -83,9 +104,39 @@ export function AccountPage() {
     }
   }, [t])
 
+  const loadVoiceStatus = useCallback(async () => {
+    setVoiceError(null)
+    setVoiceLoading(true)
+    try {
+      const res = await fetch("/api/account/voice-token", { cache: "no-store" })
+      const data = (await res.json()) as VoiceTokenStatusDto & { error?: string }
+      if (!res.ok) {
+        setVoiceError(data.error ?? t("accountPage.voiceLoadError"))
+        setVoiceStatus(null)
+        return
+      }
+      setVoiceStatus({
+        configured: data.configured,
+        active: data.active,
+        label: data.label,
+        lastUsedAt: data.lastUsedAt,
+        updatedAt: data.updatedAt,
+      })
+    } catch {
+      setVoiceError(t("accountPage.networkError"))
+      setVoiceStatus(null)
+    } finally {
+      setVoiceLoading(false)
+    }
+  }, [t])
+
   useEffect(() => {
     void loadProfile()
   }, [loadProfile])
+
+  useEffect(() => {
+    void loadVoiceStatus()
+  }, [loadVoiceStatus])
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()
@@ -182,6 +233,61 @@ export function AccountPage() {
       setDeleteError(t("accountPage.networkError"))
     } finally {
       setDeleteWorking(false)
+    }
+  }
+
+  async function createOrRotateVoiceToken() {
+    setVoiceMessage(null)
+    setVoiceError(null)
+    setVoiceCopyMessage(null)
+    setVoiceCreating(true)
+    try {
+      const res = await fetch("/api/account/voice-token", { method: "POST" })
+      const data = (await res.json()) as { ok?: boolean; token?: string; error?: string }
+      if (!res.ok || !data.token) {
+        setVoiceError(data.error ?? t("accountPage.voiceCreateError"))
+        return
+      }
+      setCreatedVoiceToken(data.token)
+      setVoiceMessage(t("accountPage.voiceCreated"))
+      await loadVoiceStatus()
+    } catch {
+      setVoiceError(t("accountPage.networkError"))
+    } finally {
+      setVoiceCreating(false)
+    }
+  }
+
+  async function copyVoiceToken() {
+    if (!createdVoiceToken) return
+    try {
+      await navigator.clipboard.writeText(createdVoiceToken)
+      setVoiceCopyMessage(t("accountPage.voiceCopied"))
+    } catch {
+      setVoiceCopyMessage(t("accountPage.voiceCopyError"))
+    }
+  }
+
+  async function revokeVoiceToken() {
+    setVoiceMessage(null)
+    setVoiceError(null)
+    setVoiceDeleting(true)
+    try {
+      const res = await fetch("/api/account/voice-token", { method: "DELETE" })
+      const data = (await res.json()) as { ok?: boolean; error?: string }
+      if (!res.ok) {
+        setVoiceError(data.error ?? t("accountPage.voiceDeleteError"))
+        return
+      }
+      setVoiceDeleteOpen(false)
+      setCreatedVoiceToken("")
+      setVoiceCopyMessage(null)
+      setVoiceMessage(t("accountPage.voiceDeleted"))
+      await loadVoiceStatus()
+    } catch {
+      setVoiceError(t("accountPage.networkError"))
+    } finally {
+      setVoiceDeleting(false)
     }
   }
 
@@ -335,6 +441,73 @@ export function AccountPage() {
 
         <Separator />
 
+        <section className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">{t("accountPage.sectionVoice")}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("accountPage.voiceIntro")}</p>
+            </div>
+            <KeyRound className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          </div>
+
+          {voiceMessage ? (
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">{voiceMessage}</p>
+          ) : null}
+          {voiceError ? <p className="text-sm text-destructive">{voiceError}</p> : null}
+
+          <div className="rounded-md border border-border/80 bg-muted/20 p-3">
+            {voiceLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("authPages.loading")}
+              </div>
+            ) : (
+              <div className="space-y-1 text-sm">
+                <p>
+                  <span className="font-medium">{t("accountPage.voiceStatusLabel")}:</span>{" "}
+                  {voiceStatus?.configured
+                    ? t("accountPage.voiceStatusConfigured")
+                    : t("accountPage.voiceStatusNotConfigured")}
+                </p>
+                {voiceStatus?.lastUsedAt ? (
+                  <p className="text-muted-foreground">
+                    {t("accountPage.voiceLastUsed")}{" "}
+                    {new Date(voiceStatus.lastUsedAt).toLocaleString()}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={() => setVoiceDialogOpen(true)}>
+              {voiceStatus?.configured ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  {t("accountPage.voiceRotate")}
+                </>
+              ) : (
+                <>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  {t("accountPage.voiceCreate")}
+                </>
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!voiceStatus?.configured}
+              onClick={() => setVoiceDeleteOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t("accountPage.voiceRevoke")}
+            </Button>
+          </div>
+        </section>
+
+        <Separator />
+
         <div className="space-y-4 rounded-xl border border-destructive/30 bg-destructive/5 p-5">
           <h2 className="text-base font-semibold text-destructive">{t("accountPage.sectionDanger")}</h2>
           <p className="text-sm text-muted-foreground">{t("accountPage.deleteIntro")}</p>
@@ -388,6 +561,85 @@ export function AccountPage() {
                 </>
               ) : (
                 t("accountPage.deleteConfirm")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={voiceDialogOpen}
+        onOpenChange={(open) => {
+          setVoiceDialogOpen(open)
+          if (!open) {
+            setCreatedVoiceToken("")
+            setVoiceCopyMessage(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("accountPage.voiceDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("accountPage.voiceDialogDescription")}</DialogDescription>
+          </DialogHeader>
+          {createdVoiceToken ? (
+            <div className="space-y-2 py-2">
+              <Label htmlFor="voice-token">{t("accountPage.voiceTokenLabel")}</Label>
+              <Input id="voice-token" value={createdVoiceToken} readOnly />
+              <p className="text-xs text-muted-foreground">{t("accountPage.voiceTokenHint")}</p>
+              {voiceCopyMessage ? <p className="text-sm text-muted-foreground">{voiceCopyMessage}</p> : null}
+            </div>
+          ) : null}
+          <DialogFooter className="gap-2 sm:gap-0">
+            {createdVoiceToken ? (
+              <>
+                <Button type="button" variant="outline" onClick={() => void copyVoiceToken()}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  {t("accountPage.voiceCopy")}
+                </Button>
+                <Button type="button" onClick={() => setVoiceDialogOpen(false)}>
+                  {t("projects.deleteCancel")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button type="button" variant="outline" onClick={() => setVoiceDialogOpen(false)}>
+                  {t("projects.deleteCancel")}
+                </Button>
+                <Button type="button" disabled={voiceCreating} onClick={() => void createOrRotateVoiceToken()}>
+                  {voiceCreating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t("accountPage.saving")}
+                    </>
+                  ) : (
+                    t("accountPage.voiceGenerateConfirm")
+                  )}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={voiceDeleteOpen} onOpenChange={setVoiceDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("accountPage.voiceDeleteTitle")}</DialogTitle>
+            <DialogDescription>{t("accountPage.voiceDeleteDescription")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setVoiceDeleteOpen(false)}>
+              {t("projects.deleteCancel")}
+            </Button>
+            <Button type="button" variant="destructive" disabled={voiceDeleting} onClick={() => void revokeVoiceToken()}>
+              {voiceDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("accountPage.deleting")}
+                </>
+              ) : (
+                t("accountPage.voiceDeleteConfirm")
               )}
             </Button>
           </DialogFooter>

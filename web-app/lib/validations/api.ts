@@ -44,6 +44,7 @@ export const deleteAccountBodySchema = z.object({
 
 export const forgotPasswordBodySchema = z.object({
   email: z.string().trim().email().max(254),
+  locale: z.enum(["en", "es"]).optional(),
 })
 
 export const resetPasswordBodySchema = z.object({

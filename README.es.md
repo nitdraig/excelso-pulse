@@ -63,7 +63,7 @@
    npm run dev
    ```
 
-   Abre [http://localhost:3000](http://localhost:3000).
+   Abre [https://pulse.excelso.xyz](https://pulse.excelso.xyz).
 
 4. **Compilar**
 
