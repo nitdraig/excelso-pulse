@@ -1,11 +1,22 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { timingSafeEqualToken } from "../secureBearerCompare";
 
+export interface PulseServiceAuthMiddlewareOptions {
+  /**
+   * Mismo valor que `expectedToken`, aceptado por esta cabecera además de `Authorization: Bearer`.
+   * `req.get` resuelve el nombre sin distinguir mayúsculas (p. ej. `x-monitoring-token`).
+   */
+  alternateHeaderName?: string;
+}
+
 /**
- * Middleware que exige `Authorization: Bearer <token>` igual a `expectedToken`.
+ * Middleware que valida el token **antes** de que la ruta ejecute lógica pesada (p. ej. probes).
+ * Por defecto: `Authorization: Bearer <token>`. Opcionalmente también una cabecera alternativa
+ * con el mismo secreto (útil para webhooks o proxies que no envían Bearer).
  */
 export function createPulseBearerAuthMiddleware(
-  expectedToken: string
+  expectedToken: string,
+  options?: PulseServiceAuthMiddlewareOptions
 ): RequestHandler {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!expectedToken.length) {
@@ -14,17 +25,23 @@ export function createPulseBearerAuthMiddleware(
     }
 
     const auth = req.get("authorization");
-    if (!auth?.toLowerCase().startsWith("bearer ")) {
-      res.status(401).json({ error: "unauthorized" });
-      return;
+    if (auth?.toLowerCase().startsWith("bearer ")) {
+      const bearer = auth.slice(7).trim();
+      if (bearer.length && timingSafeEqualToken(bearer, expectedToken)) {
+        next();
+        return;
+      }
     }
 
-    const token = auth.slice(7).trim();
-    if (!token.length || !timingSafeEqualToken(token, expectedToken)) {
-      res.status(401).json({ error: "unauthorized" });
-      return;
+    const alt = options?.alternateHeaderName?.trim();
+    if (alt?.length) {
+      const headerVal = req.get(alt)?.trim();
+      if (headerVal?.length && timingSafeEqualToken(headerVal, expectedToken)) {
+        next();
+        return;
+      }
     }
 
-    next();
+    res.status(401).json({ error: "unauthorized" });
   };
 }

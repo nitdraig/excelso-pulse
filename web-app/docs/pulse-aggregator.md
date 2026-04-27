@@ -15,6 +15,7 @@ Esta app actúa como **cliente** de cada backend: llama `GET {pulseUrl}` con `Au
 |------|-----|
 | `GET /api/portfolio` | Sesión: lista de proyectos del usuario **fusionada** con la última ronda agregada (lo usa el dashboard). |
 | `GET /api/pulse/summary` | Sesión: JSON agregado crudo (`entries[]`) para UI secundaria, otro BFF o jobs. |
+| `POST /api/v1/voice/fulfillment` | Webhook **Dialogflow ES** (sin sesión web): secreto `VOICE_WEBHOOK_SECRET`, usuario por `x-excelso-user-email` o `VOICE_DEFAULT_USER_EMAIL`. Ver [`voice-fulfillment.md`](./voice-fulfillment.md). |
 | `GET /api/projects` | Registro en Mongo sin llamar a backends (placeholders sin live). |
 | `GET /api/projects/{slug}` | Detalle para edición: `pulseUrl`, `hasBearer`, etc. **No** devuelve el token ni el cifrado. |
 | `PATCH /api/projects/{slug}` | Actualiza campos del origen; invalida caché del agregador. |
@@ -36,6 +37,16 @@ Ninguno devuelve secretos.
 | `PULSE_RATE_LIMIT_WINDOW_MS` | Ventana del rate limit (default `60000`). |
 | `PULSE_SOURCES` | JSON opcional: `[{"id":"…","pulseUrl":"…","secretEnvKey":"…"}]`. |
 | `PULSE_MERGE_ENV_SOURCES` | `1` o `true` para mezclar `PULSE_SOURCES` con los orígenes del usuario (**solo single-tenant**). |
+| `PULSE_MAX_CONCURRENCY` | Máximo de GET concurrentes a backends por ronda (`0` = ilimitado). En voz, si es `0`, se usa `8` por defecto. |
+| `VOICE_WEBHOOK_SECRET` | Secreto compartido con el webhook de Dialogflow (Bearer y/o cabecera alternativa). |
+| `VOICE_WEBHOOK_ALT_HEADER_NAME` | Opcional: nombre de cabecera donde se envía el mismo secreto (p. ej. `x-monitoring-token`). |
+| `VOICE_DEFAULT_USER_EMAIL` | Correo del usuario MongoDB si no se envía `x-excelso-user-email`. |
+| `VOICE_PULSE_CACHE_TTL_MS` | TTL de la caché solo para la rama voz (default `45000`; `0` = sin caché de voz). |
+| `VOICE_PULSE_ROUND_TIMEOUT_MS` | Timeout de ronda en voz (default `9000`). |
+| `VOICE_PULSE_FETCH_TIMEOUT_MS` | Timeout por backend en voz (default `4000`). |
+
+Detalle del webhook: [`voice-fulfillment.md`](./voice-fulfillment.md).  
+Despliegue/secretos: [`deploy-voice-vercel.md`](./deploy-voice-vercel.md).
 
 ## Contrato del backend
 

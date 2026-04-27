@@ -4,7 +4,7 @@ import { auth } from "@/auth"
 import { encryptBearerSecret } from "@/lib/crypto/bearer-at-rest"
 import { connectDB } from "@/lib/db/connect"
 import { ProjectModel } from "@/lib/db/models"
-import { invalidatePulseCache } from "@/lib/pulse/cache"
+import { invalidatePulseCachesForUser } from "@/lib/pulse/cache"
 import type { ProjectRegistryLean } from "@/lib/projects/merge-registry-pulse"
 import { mergeRegistryWithPulseEntries } from "@/lib/projects/merge-registry-pulse"
 import { createProjectBodySchema } from "@/lib/validations/api"
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       secretEnvKey: "",
     })
 
-    invalidatePulseCache(`user:${session.user.id}`)
+    invalidatePulseCachesForUser(session.user.id)
 
     const registryRow: ProjectRegistryLean = {
       ...(created.toObject() as unknown as ProjectRegistryLean),

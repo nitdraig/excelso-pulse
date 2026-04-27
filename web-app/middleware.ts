@@ -21,8 +21,10 @@ export default auth((req) => {
     pathname.startsWith("/api/register") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico"
+  /** Webhook Dialogflow / voz: auth propia (secreto de instancia), no sesión de navegador. */
+  const isPublicVoiceApi = pathname.startsWith("/api/v1/voice/")
 
-  if (isPublicAsset) return NextResponse.next()
+  if (isPublicAsset || isPublicVoiceApi) return NextResponse.next()
 
   if (req.auth && isGuestLanding) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin))

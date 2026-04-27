@@ -170,8 +170,10 @@ Desde otra app, apunta a la carpeta con `npm install /ruta/a/excelso-pulse/npm` 
 
 ## Documentación
 
+- [`docs/estrategia-y-enfoque.md`](docs/estrategia-y-enfoque.md) — Estrategia de producto, fases y checklist de avance.
 - [`web-app/docs/pulse-aggregator.md`](web-app/docs/pulse-aggregator.md) — Comportamiento del agregador, variables y endpoints.
 - [`web-app/docs/health-business-pulse.md`](web-app/docs/health-business-pulse.md) — Contrato de referencia del backend `GET /internal/pulse`.
+- [`web-app/docs/deploy-voice-vercel.md`](web-app/docs/deploy-voice-vercel.md) — Despliegue del webhook de voz y gestión de secretos (Vercel/VPS).
 
 ## Seguridad
 

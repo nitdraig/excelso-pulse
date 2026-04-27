@@ -20,6 +20,9 @@ export type {
 } from "./types";
 export { withTimeout } from "./withTimeout";
 
-export { createPulseBearerAuthMiddleware } from "./middleware/createBearerAuthMiddleware";
+export {
+  createPulseBearerAuthMiddleware,
+  type PulseServiceAuthMiddlewareOptions,
+} from "./middleware/createBearerAuthMiddleware";
 export type { CreatePulseExpressRouterOptions } from "./express/createPulseRouter";
 export { createPulseExpressRouter } from "./express/createPulseRouter";

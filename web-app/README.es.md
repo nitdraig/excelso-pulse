@@ -169,8 +169,10 @@ Desde otra app, apunta a la carpeta con `npm install /ruta/a/excelso-pulse/npm` 
 
 ## Documentación
 
+- [`../docs/estrategia-y-enfoque.md`](../docs/estrategia-y-enfoque.md) — Estrategia del monorepo, fases y checklist.
 - [`docs/pulse-aggregator.md`](docs/pulse-aggregator.md) — Comportamiento del agregador, variables y endpoints.
 - [`docs/health-business-pulse.md`](docs/health-business-pulse.md) — Contrato de referencia del backend `GET /internal/pulse`.
+- [`docs/deploy-voice-vercel.md`](docs/deploy-voice-vercel.md) — Despliegue del webhook de voz y secretos (Vercel/VPS).
 
 ## Seguridad
 

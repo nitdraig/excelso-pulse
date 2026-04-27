@@ -3,19 +3,35 @@ import { connectDB } from "@/lib/db/connect"
 import { ProjectModel } from "@/lib/db/models"
 import { aggregatePulseSources } from "@/lib/pulse/aggregate"
 import { getCachedAggregate, setCachedAggregate } from "@/lib/pulse/cache"
-import { mergeEnvPulseSources } from "@/lib/pulse/config"
+import {
+  getPulseMaxConcurrency,
+  getVoicePulseCacheTtlMs,
+  getVoicePulseFetchTimeoutMs,
+  getVoicePulseRoundTimeoutMs,
+  mergeEnvPulseSources,
+} from "@/lib/pulse/config"
 import { parsePulseSourcesEnv } from "@/lib/pulse/env-sources"
 import { resolveBearerFromEnv } from "@/lib/pulse/resolve-secret"
 import { getBearerForProject } from "@/lib/projects/resolve-bearer"
 import type { PulseSource, PulseSummaryEntry } from "@/lib/pulse/types"
 
-export async function loadPulseAggregateForUser(userId: string): Promise<{
+export type LoadPulseForUserOptions = {
+  /** Ronda más corta, caché dedicada y concurrencia por defecto acotada (voz / webhooks). */
+  voice?: boolean
+}
+
+export async function loadPulseAggregateForUser(
+  userId: string,
+  opts?: LoadPulseForUserOptions,
+): Promise<{
   entries: PulseSummaryEntry[]
   roundDurationMs: number
   fetchedAt: string
   fromCache: boolean
 }> {
-  const cacheKey = `user:${userId}`
+  const voice = Boolean(opts?.voice)
+  const cacheKey = voice ? `voice:user:${userId}` : `user:${userId}`
+  const voiceTtl = getVoicePulseCacheTtlMs()
   const cached = getCachedAggregate(cacheKey)
   if (cached) {
     return {
@@ -56,10 +72,24 @@ export async function loadPulseAggregateForUser(userId: string): Promise<{
     }
   }
 
-  const { entries, roundDurationMs } = await aggregatePulseSources(sources)
+  const maxConc = getPulseMaxConcurrency()
+  const { entries, roundDurationMs } = await aggregatePulseSources(
+    sources,
+    voice
+      ? {
+          fetchTimeoutMs: getVoicePulseFetchTimeoutMs(),
+          roundTimeoutMs: getVoicePulseRoundTimeoutMs(),
+          maxConcurrency: maxConc > 0 ? maxConc : 8,
+        }
+      : undefined,
+  )
   const fetchedAt = new Date().toISOString()
 
-  setCachedAggregate(cacheKey, { entries, roundDurationMs, fetchedAt })
+  setCachedAggregate(
+    cacheKey,
+    { entries, roundDurationMs, fetchedAt },
+    voice ? voiceTtl : undefined,
+  )
 
   return { entries, roundDurationMs, fetchedAt, fromCache: false }
 }

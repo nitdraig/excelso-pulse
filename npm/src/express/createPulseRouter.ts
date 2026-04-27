@@ -10,6 +10,11 @@ export interface CreatePulseExpressRouterOptions extends CollectPulseOptions {
    * Token de servicio. Si falta o está vacío, se devuelve `null` (no montar rutas).
    */
   bearerToken: string | undefined;
+  /**
+   * Si se define (p. ej. `x-monitoring-token`), el mismo `bearerToken` se acepta también por esa cabecera,
+   * además de `Authorization: Bearer`. La validación ocurre antes de `collectPulse` / probes.
+   */
+  monitoringTokenHeaderName?: string;
   /** Ruta HTTP relativa al router montado (p. ej. `"pulse"` → `GET .../pulse`). */
   relativePath?: string;
   /** Por defecto 60 req / minuto por IP. Pasa `false` para desactivar. */
@@ -54,7 +59,9 @@ export function createPulseExpressRouter(
     );
   }
 
-  const auth = createPulseBearerAuthMiddleware(token);
+  const auth = createPulseBearerAuthMiddleware(token, {
+    alternateHeaderName: opts.monitoringTokenHeaderName,
+  });
 
   const collectOpts: CollectPulseOptions = {
     probes: opts.probes,

@@ -1,6 +1,6 @@
 {
   "name": "excelso-pulse-express",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Health & Business Pulse for Express: protected JSON pulse, pluggable probes (MongoDB by default).",
   "keywords": [
     "express",
@@ -35,6 +35,7 @@
     "dist",
     "README.md",
     "README.es.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 vi.mock("@/lib/pulse/config", () => ({
   getPulseFetchTimeoutMs: () => 5000,
   getPulseRoundTimeoutMs: () => 10_000,
+  getPulseMaxConcurrency: () => 0,
 }))
 
 import { aggregatePulseSources } from "@/lib/pulse/aggregate"

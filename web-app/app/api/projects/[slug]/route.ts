@@ -4,7 +4,7 @@ import { auth } from "@/auth"
 import { encryptBearerSecret } from "@/lib/crypto/bearer-at-rest"
 import { connectDB } from "@/lib/db/connect"
 import { ProjectModel } from "@/lib/db/models"
-import { invalidatePulseCache } from "@/lib/pulse/cache"
+import { invalidatePulseCachesForUser } from "@/lib/pulse/cache"
 import { findOwnedProjectDoc, findOwnedProjectLean } from "@/lib/projects/find-owned"
 import { mergeRegistryWithPulseEntries } from "@/lib/projects/merge-registry-pulse"
 import { updateProjectBodySchema } from "@/lib/validations/api"
@@ -121,7 +121,7 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
     if (parsed.data.slug !== undefined) doc.slug = parsed.data.slug
 
     await doc.save()
-    invalidatePulseCache(`user:${session.user.id}`)
+    invalidatePulseCachesForUser(session.user.id)
 
     const merged = mergeRegistryWithPulseEntries([doc.toObject()], [])[0]
     return NextResponse.json({ project: merged })
@@ -155,7 +155,7 @@ export async function DELETE(_req: Request, ctx: RouteCtx) {
     }
 
     await doc.deleteOne()
-    invalidatePulseCache(`user:${session.user.id}`)
+    invalidatePulseCachesForUser(session.user.id)
 
     return NextResponse.json({ ok: true })
   } catch (e) {

@@ -2,8 +2,16 @@ import { defaultInfra, normalizeBackendPulse } from "@/lib/pulse/normalize"
 import type { PulseFetchErrorCode, PulseSource, PulseSummaryEntry } from "@/lib/pulse/types"
 import {
   getPulseFetchTimeoutMs,
+  getPulseMaxConcurrency,
   getPulseRoundTimeoutMs,
 } from "@/lib/pulse/config"
+
+export type AggregatePulseOptions = {
+  fetchTimeoutMs?: number
+  roundTimeoutMs?: number
+  /** 0 = ilimitado (mismo comportamiento que antes). */
+  maxConcurrency?: number
+}
 
 const PRESENTATION_FETCH_FAILURE = {
   readiness: "ready" as const,
@@ -23,6 +31,30 @@ function combineAbortSignals(signals: AbortSignal[]): AbortSignal {
     s.addEventListener("abort", forward, { once: true })
   }
   return c.signal
+}
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return []
+  const limit =
+    concurrency > 0 && concurrency < items.length ? concurrency : items.length
+  if (limit === items.length) {
+    return Promise.all(items.map((item, i) => mapper(item, i)))
+  }
+  const results: R[] = new Array(items.length)
+  const stack = items.map((item, i) => ({ item, i }))
+  async function worker(): Promise<void> {
+    while (stack.length > 0) {
+      const job = stack.pop()
+      if (!job) return
+      results[job.i] = await mapper(job.item, job.i)
+    }
+  }
+  await Promise.all(Array.from({ length: limit }, () => worker()))
+  return results
 }
 
 async function fetchPulseSource(
@@ -236,27 +268,27 @@ async function fetchPulseSource(
 }
 
 /**
- * Lanza GET paralelos a cada origen; un fallo no tumba el resto del informe.
+ * Lanza GET a cada origen (paralelismo acotado opcional); un fallo no tumba el resto del informe.
  */
 export async function aggregatePulseSources(
   sources: PulseSource[],
+  options?: AggregatePulseOptions,
 ): Promise<{ entries: PulseSummaryEntry[]; roundDurationMs: number }> {
   const t0 = performance.now()
-  const perMs = getPulseFetchTimeoutMs()
-  const roundMs = getPulseRoundTimeoutMs()
+  const perMs = options?.fetchTimeoutMs ?? getPulseFetchTimeoutMs()
+  const roundMs = options?.roundTimeoutMs ?? getPulseRoundTimeoutMs()
+  const maxConc = options?.maxConcurrency ?? getPulseMaxConcurrency()
 
   const roundController = new AbortController()
   const roundTimer = setTimeout(() => roundController.abort(), roundMs)
 
-  const tasks = sources.map((source) => {
-    const perController = new AbortController()
-    const perTimer = setTimeout(() => perController.abort(), perMs)
-    const signal = combineAbortSignals([perController.signal, roundController.signal])
-    return fetchPulseSource(source, signal).finally(() => clearTimeout(perTimer))
-  })
-
   try {
-    const entries = await Promise.all(tasks)
+    const entries = await mapWithConcurrency(sources, maxConc, (source) => {
+      const perController = new AbortController()
+      const perTimer = setTimeout(() => perController.abort(), perMs)
+      const signal = combineAbortSignals([perController.signal, roundController.signal])
+      return fetchPulseSource(source, signal).finally(() => clearTimeout(perTimer))
+    })
     return {
       entries,
       roundDurationMs: Math.round(performance.now() - t0),
