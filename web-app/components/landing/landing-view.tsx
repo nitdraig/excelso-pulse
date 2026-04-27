@@ -87,6 +87,7 @@ export function LandingView() {
 
       <footer className="relative z-10 border-t border-border/60 bg-muted/20 py-8 text-center text-xs text-muted-foreground">
         <p>{t("landing.footer")}</p>
+        <span className="text-xs text-muted-foreground my-4">Powered by <Link href="https://excelso.xyz" className="text-primary hover:underline">Excelso</Link></span>
       </footer>
     </div>
   )
