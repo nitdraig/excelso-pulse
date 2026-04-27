@@ -1,6 +1,8 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import type { SessionUserPayload } from "@/lib/auth/session-user"
+import { loginCredentialsSchema } from "@/lib/validations/api"
+import { consumeRateLimit, getClientIp } from "@/lib/security/rate-limit"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -10,14 +12,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Correo", type: "email" },
         password: { label: "Contraseña", type: "password" },
       },
-      async authorize(credentials) {
-        const email = credentials?.email
-        const password = credentials?.password
-        if (typeof email !== "string" || typeof password !== "string") return null
-        if (!email.trim() || !password) return null
+      async authorize(credentials, request) {
+        const parsed = loginCredentialsSchema.safeParse(credentials)
+        if (!parsed.success) return null
+
+        const ip = getClientIp(request)
+        const ipRate = consumeRateLimit({
+          key: `login:ip:${ip}`,
+          limit: 20,
+          windowMs: 15 * 60 * 1000,
+        })
+        if (!ipRate.ok) return null
+
+        const normalizedEmail = parsed.data.email.toLowerCase()
+        const emailRate = consumeRateLimit({
+          key: `login:email:${normalizedEmail}`,
+          limit: 8,
+          windowMs: 15 * 60 * 1000,
+        })
+        if (!emailRate.ok) return null
 
         const { authenticateUser } = await import("@/lib/auth/authenticate-user")
-        const user = await authenticateUser(email, password)
+        const user = await authenticateUser(normalizedEmail, parsed.data.password)
         return user as SessionUserPayload | null
       },
     }),

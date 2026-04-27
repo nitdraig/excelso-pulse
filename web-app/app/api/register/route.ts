@@ -3,8 +3,30 @@ import bcrypt from "bcryptjs"
 import { connectDB } from "@/lib/db/connect"
 import { UserModel } from "@/lib/db/models"
 import { registerBodySchema } from "@/lib/validations/api"
+import { consumeRateLimit, getClientIp } from "@/lib/security/rate-limit"
+
+function tooManyRequests(retryAfterSeconds: number) {
+  return NextResponse.json(
+    { error: "Demasiados intentos. Inténtalo de nuevo más tarde." },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(retryAfterSeconds),
+        "Cache-Control": "no-store",
+      },
+    },
+  )
+}
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req)
+  const ipRate = consumeRateLimit({
+    key: `register:ip:${ip}`,
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (!ipRate.ok) return tooManyRequests(ipRate.retryAfterSeconds)
+
   let json: unknown
   try {
     json = await req.json()
@@ -21,6 +43,12 @@ export async function POST(req: Request) {
   }
 
   const { name, email, password } = parsed.data
+  const emailRate = consumeRateLimit({
+    key: `register:email:${email.toLowerCase()}`,
+    limit: 3,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (!emailRate.ok) return tooManyRequests(emailRate.retryAfterSeconds)
 
   try {
     await connectDB()

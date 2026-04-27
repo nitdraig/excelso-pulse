@@ -75,6 +75,7 @@ export function RegisterForm() {
               name="name"
               autoComplete="name"
               required
+              maxLength={120}
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={pending}
@@ -89,6 +90,7 @@ export function RegisterForm() {
               type="email"
               autoComplete="email"
               required
+              maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={pending}
@@ -103,6 +105,7 @@ export function RegisterForm() {
               autoComplete="new-password"
               required
               minLength={8}
+              maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={pending}

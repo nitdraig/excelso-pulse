@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connect"
-import { UserModel } from "@/lib/db/models"
+import { UserModel, VoiceIntegrationModel } from "@/lib/db/models"
 import {
+  getVoiceWebhookAltHeaderName,
   getPulseRateLimitMax,
   getPulseRateLimitWindowMs,
   getVoiceDefaultUserEmail,
@@ -18,7 +19,11 @@ import {
   buildVoiceTextFromReport,
   localeFromLanguageCode,
 } from "@/lib/voice/build-voice-summary"
-import { voiceWebhookAuthOk } from "@/lib/voice/validate-voice-webhook-auth"
+import {
+  extractVoiceTokenFromRequest,
+  hashVoiceToken,
+} from "@/lib/voice/voice-user-token"
+import { timingSafeEqualString } from "@/lib/voice/validate-voice-webhook-auth"
 
 const USER_EMAIL_HEADER = "x-excelso-user-email"
 
@@ -31,22 +36,10 @@ export async function GET() {
 
 /**
  * Webhook Dialogflow ES: cuerpo con `queryResult`, respuesta `fulfillmentText` + `fulfillmentMessages`.
- * Auth: `Authorization: Bearer <VOICE_WEBHOOK_SECRET>` y/o cabecera en `VOICE_WEBHOOK_ALT_HEADER_NAME`.
- * Usuario: cabecera `x-excelso-user-email` o variable `VOICE_DEFAULT_USER_EMAIL`.
+ * Auth principal: token por usuario (Bearer/cabecera alt), resuelto por hash en MongoDB.
+ * Fallback legacy: secreto de instancia + `x-excelso-user-email` / `VOICE_DEFAULT_USER_EMAIL`.
  */
 export async function POST(request: Request) {
-  const secret = getVoiceWebhookSecret()
-  if (!secret.length) {
-    return NextResponse.json(
-      { error: "voice_webhook_not_configured" },
-      { status: 503 },
-    )
-  }
-
-  if (!voiceWebhookAuthOk(request)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
-  }
-
   let body: unknown
   try {
     body = await request.json()
@@ -65,37 +58,60 @@ export async function POST(request: Request) {
     )
   }
 
-  const headerEmail =
-    request.headers.get(USER_EMAIL_HEADER)?.trim().toLowerCase() ?? ""
-  const defaultEmail = getVoiceDefaultUserEmail()
-  const targetEmail = headerEmail || defaultEmail
-
-  if (!targetEmail) {
-    const msg =
-      "Configura VOICE_DEFAULT_USER_EMAIL en el servidor o envía la cabecera x-excelso-user-email."
-    return NextResponse.json(buildDialogflowEsFulfillmentResponse(msg), {
-      status: 200,
-    })
+  const locale = localeFromLanguageCode(parsed.languageCode)
+  const secret = getVoiceWebhookSecret()
+  const token = extractVoiceTokenFromRequest(
+    request,
+    getVoiceWebhookAltHeaderName(),
+  )
+  if (!token) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
   await connectDB()
-  const user = await UserModel.findOne({ email: targetEmail })
-    .select("_id")
+
+  // 1) Auth multiusuario por token (nuevo flujo recomendado).
+  const voiceRow = await VoiceIntegrationModel.findOne({
+    tokenHash: hashVoiceToken(token),
+    active: true,
+  })
+    .select("ownerId")
     .lean()
 
-  const locale = localeFromLanguageCode(parsed.languageCode)
+  let userId = voiceRow?.ownerId ? String(voiceRow.ownerId) : ""
 
-  if (!user?._id) {
-    const msg =
-      locale === "es"
-        ? "No encontré un usuario con ese correo en esta instancia."
-        : "No user found with that email on this instance."
-    return NextResponse.json(buildDialogflowEsFulfillmentResponse(msg), {
-      status: 200,
-    })
+  // 2) Fallback legacy por secreto de instancia + email (compatibilidad).
+  if (!userId && secret.length && timingSafeEqualString(token, secret)) {
+    const headerEmail =
+      request.headers.get(USER_EMAIL_HEADER)?.trim().toLowerCase() ?? ""
+    const defaultEmail = getVoiceDefaultUserEmail()
+    const targetEmail = headerEmail || defaultEmail
+
+    if (!targetEmail) {
+      const msg =
+        "Configura VOICE_DEFAULT_USER_EMAIL en el servidor o envía la cabecera x-excelso-user-email."
+      return NextResponse.json(buildDialogflowEsFulfillmentResponse(msg), {
+        status: 200,
+      })
+    }
+    const user = await UserModel.findOne({ email: targetEmail })
+      .select("_id")
+      .lean()
+    if (!user?._id) {
+      const msg =
+        locale === "es"
+          ? "No encontré un usuario con ese correo en esta instancia."
+          : "No user found with that email on this instance."
+      return NextResponse.json(buildDialogflowEsFulfillmentResponse(msg), {
+        status: 200,
+      })
+    }
+    userId = String(user._id)
   }
 
-  const userId = String(user._id)
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+  }
 
   const rl = checkRateLimit(
     `voice_fulfillment:${userId}`,
@@ -116,6 +132,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (voiceRow?.ownerId) {
+      void VoiceIntegrationModel.updateOne(
+        { _id: (voiceRow as { _id?: unknown })._id },
+        { $set: { lastUsedAt: new Date() } },
+      )
+    }
     const { entries, roundDurationMs, fromCache } =
       await loadPulseAggregateForUser(userId, { voice: true })
     const report = buildVoiceReportFromEntries(entries, locale)

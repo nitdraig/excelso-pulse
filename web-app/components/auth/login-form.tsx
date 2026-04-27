@@ -80,6 +80,7 @@ export function LoginForm() {
               type="email"
               autoComplete="email"
               required
+              maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={pending}
@@ -101,6 +102,7 @@ export function LoginForm() {
               name="password"
               autoComplete="current-password"
               required
+              maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={pending}

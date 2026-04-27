@@ -8,6 +8,18 @@ No usa sesión de navegador: la autenticación es un **secreto de instancia** co
 
 ## Autenticación
 
+### Modo recomendado (multiusuario)
+
+Cada usuario genera su propio token en `POST /api/account/voice-token`.
+
+- En Dialogflow para ese usuario, envía:
+  - `Authorization: Bearer <VOICE_USER_TOKEN>`
+  - o cabecera alternativa si defines `VOICE_WEBHOOK_ALT_HEADER_NAME`.
+- El webhook resuelve el usuario por hash del token (`VoiceIntegration`) y carga su portfolio.
+- El token en claro solo se muestra al crear/rotar; en DB se guarda hash SHA-256.
+
+### Fallback legacy (single-user)
+
 1. Define **`VOICE_WEBHOOK_SECRET`** (valor largo y aleatorio).
 2. En Dialogflow (o tu proxy), envía el mismo valor como:
    - `Authorization: Bearer <VOICE_WEBHOOK_SECRET>`, y/o
@@ -19,10 +31,10 @@ Sin `VOICE_WEBHOOK_SECRET` el endpoint responde **503** (`voice_webhook_not_conf
 
 El informe sigue siendo el **portfolio MongoDB** de un usuario registrado en la instancia:
 
-- Cabecera **`x-excelso-user-email`**: correo en minúsculas del usuario (recomendado si varias personas usan la misma instancia y distintos proyectos Dialogflow).
-- O variable **`VOICE_DEFAULT_USER_EMAIL`**: correo por defecto cuando no se envía la cabecera (despliegue personal / un solo operador).
+- **Modo multiusuario (token por usuario):** el usuario se infiere directamente del token.
+- **Fallback legacy:** cabecera **`x-excelso-user-email`** o variable **`VOICE_DEFAULT_USER_EMAIL`**.
 
-Si no hay cabecera ni default configurado, la respuesta HTTP es **200** con un mensaje de fulfillment explicando que falta configuración (Dialogflow no reintenta infinito por 4xx en algunos casos; aquí priorizamos mensaje audible).
+Si usas fallback y no hay cabecera ni default configurado, la respuesta HTTP es **200** con un mensaje de fulfillment explicando que falta configuración.
 
 Si el correo no existe en MongoDB, **200** con texto de error amable.
 

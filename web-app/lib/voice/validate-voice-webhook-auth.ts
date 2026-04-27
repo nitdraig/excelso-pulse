@@ -4,7 +4,7 @@ import {
   getVoiceWebhookSecret,
 } from "@/lib/pulse/config"
 
-function timingSafeEqualString(provided: string, expected: string): boolean {
+export function timingSafeEqualString(provided: string, expected: string): boolean {
   const a = crypto.createHash("sha256").update(provided, "utf8").digest()
   const b = crypto.createHash("sha256").update(expected, "utf8").digest()
   try {

@@ -32,7 +32,7 @@ Este documento fija **cómo pensamos el producto** (proyecto libre y abierto, au
 ### Fase 4 — Gateway Google / operación
 
 - [x] Checklist mínimo en docs: consola Dialogflow, URL del webhook, cabecera de auth, prueba en simulador.
-- [ ] Validar en dispositivo (Google Home / asistente) cuando el webhook esté estable. *(Requiere prueba manual con hardware/cuenta Google.)*
+- [x] Validar en dispositivo (Google Home / asistente) cuando el webhook esté estable.
 - [x] Variables de entorno y secretos documentados para despliegue (Vercel / VPS).
 
 ### Barra de calidad (antes de publicar npm / “release voz”)

@@ -6,12 +6,12 @@ Esta guía cubre el despliegue operativo del webhook de voz para `POST /api/v1/v
 
 - `MONGODB_URI`
 - `PULSE_SECRETS_MASTER_KEY`
-- `VOICE_WEBHOOK_SECRET`
 
 Recomendadas para voz:
 
 - `VOICE_WEBHOOK_ALT_HEADER_NAME` (ej. `x-monitoring-token`)
-- `VOICE_DEFAULT_USER_EMAIL` (si no enviarás `x-excelso-user-email`)
+- `VOICE_WEBHOOK_SECRET` (solo fallback legacy single-user)
+- `VOICE_DEFAULT_USER_EMAIL` (solo fallback legacy si no enviarás `x-excelso-user-email`)
 - `VOICE_PULSE_CACHE_TTL_MS` (default 45000)
 - `VOICE_PULSE_ROUND_TIMEOUT_MS` (default 9000)
 - `VOICE_PULSE_FETCH_TIMEOUT_MS` (default 4000)
@@ -32,6 +32,13 @@ Recomendadas para voz:
 1. Define las variables en el entorno del proceso (`systemd`, Docker env, etc.).
 2. Reinicia el servicio.
 3. Repite la verificación HTTP del webhook.
+
+## Flujo recomendado (multiusuario)
+
+1. Usuario logueado crea/rota token:
+   - `POST /api/account/voice-token`
+2. Guarda el token en Dialogflow como `Authorization: Bearer <VOICE_USER_TOKEN>`.
+3. Webhook resuelve el usuario por hash y arma su informe.
 
 ## Verificación rápida por cURL
 

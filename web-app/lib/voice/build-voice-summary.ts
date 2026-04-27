@@ -94,7 +94,7 @@ export function buildVoiceTextFromReport(report: VoiceReport): string {
 
   if (locale === "es") {
     const parts: string[] = []
-    parts.push(`Tienes ${totalApps} aplicación${totalApps === 1 ? "" : "es"} en el informe.`)
+    parts.push(`Tienes ${totalApps} ${totalApps === 1 ? "aplicación" : "aplicaciones"} en el informe.`)
     if (counts.outage > 0) {
       if (outageLabels.length > 0) {
         parts.push(`Sin servicio o datos: ${outageLabels.join(", ")}.`)

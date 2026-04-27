@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/db/connect"
 import { UserModel } from "@/lib/db/models"
 import type { SessionUserPayload } from "@/lib/auth/session-user"
 
+const DUMMY_BCRYPT_HASH = "$2a$10$7EqJtq98hPqEX7fNZaFWoO5Q4z2JxXl16rYPD6/COM24kTx5cDIe."
+
 function buildDisplayName(
   firstName: string,
   lastName: string,
@@ -25,7 +27,11 @@ export async function authenticateUser(
     .select("+passwordHash")
     .lean()
 
-  if (!user?.passwordHash) return null
+  if (!user?.passwordHash) {
+    await bcrypt.compare(password, DUMMY_BCRYPT_HASH)
+    return null
+  }
+
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) return null
 

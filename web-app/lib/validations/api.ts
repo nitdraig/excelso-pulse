@@ -2,10 +2,28 @@ import { z } from "zod"
 import { PROJECT_ALERT_RULE_TYPES } from "@/lib/alerts/project-alert-rules"
 import { ensureHttpsUrl } from "@/lib/url"
 
+const noControlChars = (value: string) => !/[\u0000-\u001F\u007F]/.test(value)
+const emailSchema = z.string().trim().email().max(254)
+const passwordSchema = z.string().min(8).max(128).refine(noControlChars, {
+  message: "La contraseña contiene caracteres inválidos.",
+})
+
 export const registerBodySchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  email: z.string().trim().email().max(254),
-  password: z.string().min(8).max(128),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .refine(noControlChars, { message: "El nombre contiene caracteres inválidos." }),
+  email: emailSchema,
+  password: passwordSchema,
+})
+
+export const loginCredentialsSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1).max(128).refine(noControlChars, {
+    message: "La contraseña contiene caracteres inválidos.",
+  }),
 })
 
 export const patchAccountBodySchema = z.object({

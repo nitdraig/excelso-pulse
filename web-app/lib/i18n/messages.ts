@@ -1,4 +1,4 @@
-import type { Locale } from "@/lib/i18n/types"
+import type { Locale } from "@/lib/i18n/types";
 
 export const enMessages = {
   language: {
@@ -20,16 +20,20 @@ export const enMessages = {
     ctaPrimary: "Get started",
     ctaSecondary: "I already have an account",
     card1Title: "Portfolio view",
-    card1Body: "Cards per source with readiness, user impact, and drill-down sheets.",
+    card1Body:
+      "Cards per source with readiness, user impact, and drill-down sheets.",
     card2Title: "Secrets at rest",
-    card2Body: "Tokens never return to the browser after save; the aggregator calls pulse server-side.",
+    card2Body:
+      "Tokens never return to the browser after save; the aggregator calls pulse server-side.",
     card3Title: "Public docs",
-    card3Body: "Learn the pulse contract and how to wire excelso-pulse-express without signing in.",
+    card3Body:
+      "Learn the pulse contract and how to wire excelso-pulse-express without signing in.",
     footer: "© Excelso Pulse — MIT",
   },
   header: {
     title: "Excelso Pulse",
-    subtitle: "Command center for the Excelso ecosystem — health and business signals in one place.",
+    subtitle:
+      "Command center for the Excelso ecosystem — health and business signals in one place.",
     live: "Live",
     syncGlobal: "Sync Global",
     signOut: "Sign out",
@@ -131,7 +135,8 @@ export const enMessages = {
     createDescription:
       "The token is encrypted on the server before storage and never shown again in the browser. Set PULSE_SECRETS_MASTER_KEY in the Pulse deployment.",
     slugLabel: "Slug (appId)",
-    slugHint: "Must match the identifier you use when wiring sources; lowercase and hyphens only.",
+    slugHint:
+      "Must match the identifier you use when wiring sources; lowercase and hyphens only.",
     nameLabel: "Display name",
     appUrlLabel: "App URL (front)",
     appUrlHint: "Optional. Public link shown in the dashboard.",
@@ -159,8 +164,10 @@ export const enMessages = {
     pulseUrlLabelShort: "Pulse URL (backend)",
     bearerNew: "New Bearer token (optional)",
     bearerPlaceholder: "Leave empty to keep current",
-    bearerEditHint: "Minimum 8 characters if you change it. Replaces the previous encrypted token.",
-    clearBearer: "Remove stored token (the aggregator will stop authenticating until you set a new one)",
+    bearerEditHint:
+      "Minimum 8 characters if you change it. Replaces the previous encrypted token.",
+    clearBearer:
+      "Remove stored token (the aggregator will stop authenticating until you set a new one)",
     saveChanges: "Save changes",
     deleteTitle: "Delete source?",
     deleteIntro: "This will remove the record",
@@ -177,7 +184,8 @@ export const enMessages = {
     password: "Password",
     forgotPassword: "Forgot password?",
     registered: "Account created. Sign in with your email and password.",
-    passwordResetDone: "Password updated. You can sign in with your new password.",
+    passwordResetDone:
+      "Password updated. You can sign in with your new password.",
     wrongCredentials: "Invalid email or password.",
     submitting: "Signing in…",
     submit: "Open dashboard",
@@ -186,7 +194,8 @@ export const enMessages = {
   },
   forgotPassword: {
     title: "Reset password",
-    subtitle: "Enter your account email. If it exists, we will send a link to choose a new password (valid for 1 hour).",
+    subtitle:
+      "Enter your account email. If it exists, we will send a link to choose a new password (valid for 1 hour).",
     submit: "Send link",
     submitting: "Sending…",
     sent: "If an account exists for that email, you will receive instructions shortly.",
@@ -218,7 +227,7 @@ export const enMessages = {
   },
   register: {
     title: "Create account",
-    subtitle: "Data is stored in MongoDB. Use a password of at least 8 characters.",
+    subtitle: " Use a password of at least 8 characters.",
     name: "Name",
     email: "Email",
     password: "Password",
@@ -263,7 +272,8 @@ export const enMessages = {
     endpointCaption: "Typical backend route",
     endpointPath: "GET …/internal/pulse",
     stackLine: "Next.js · MongoDB · Auth.js",
-    footerNote: "Repository docs cover the aggregator env vars and the pulse JSON reference.",
+    footerNote:
+      "Repository docs cover the aggregator env vars and the pulse JSON reference.",
     overviewTitle: "What is a pulse?",
     overviewP1:
       "Each backend can expose a small JSON pulse (Health & Business Pulse) so operations sees latency, uptime, errors, and business KPIs in one response. Libraries such as excelso-pulse-express help you implement it on Express.",
@@ -292,7 +302,8 @@ export const enMessages = {
   },
   accountPage: {
     title: "Account",
-    subtitle: "Company or freelance name, your contact details, password, and session.",
+    subtitle:
+      "Company or freelance name, your contact details, password, and session.",
     sectionProfile: "Profile & organization",
     organizationLabel: "Company or freelance name",
     organizationPlaceholder: "e.g. ACME Ltd or Freelance",
@@ -319,7 +330,8 @@ export const enMessages = {
       "Deleting your account removes your user, all registered pulse sources, custom alerts, and encrypted tokens. This cannot be undone.",
     deleteAccount: "Delete my account…",
     deleteDialogTitle: "Confirm account deletion",
-    deleteDialogDescription: "Enter your current password to confirm. All projects and alerts for this user will be removed.",
+    deleteDialogDescription:
+      "Enter your current password to confirm. All projects and alerts for this user will be removed.",
     deletePasswordLabel: "Current password",
     deleteConfirm: "Delete account permanently",
     deleting: "Deleting…",
@@ -328,7 +340,8 @@ export const enMessages = {
   },
   alertsPage: {
     title: "Custom alerts",
-    subtitle: "Define rules per project source. Delivery channels (email, Slack, etc.) can be wired later on top of these rules.",
+    subtitle:
+      "Define rules per project source. Delivery channels (email, Slack, etc.) can be wired later on top of these rules.",
     loadError: "Could not load alerts.",
     newAlert: "New alert",
     project: "Project (source)",
@@ -349,11 +362,12 @@ export const enMessages = {
     createError: "Could not create alert.",
     yourAlerts: "Your alerts",
     empty: "No alerts yet. Create one above for a registered project.",
-    noProjects: "Register at least one pulse source on the dashboard before creating alerts.",
+    noProjects:
+      "Register at least one pulse source on the dashboard before creating alerts.",
     toggle: "Enable or disable alert",
     remove: "Remove alert",
   },
-} as const
+} as const;
 
 export const esMessages = {
   language: {
@@ -375,11 +389,14 @@ export const esMessages = {
     ctaPrimary: "Empezar",
     ctaSecondary: "Ya tengo cuenta",
     card1Title: "Vista portfolio",
-    card1Body: "Tarjetas por origen con readiness, impacto al usuario y fichas detalladas.",
+    card1Body:
+      "Tarjetas por origen con readiness, impacto al usuario y fichas detalladas.",
     card2Title: "Secretos en reposo",
-    card2Body: "Los tokens no vuelven al navegador tras guardar; el agregador llama al pulse en el servidor.",
+    card2Body:
+      "Los tokens no vuelven al navegador tras guardar; el agregador llama al pulse en el servidor.",
     card3Title: "Docs públicas",
-    card3Body: "Contrato pulse y cómo cablear excelso-pulse-express sin iniciar sesión.",
+    card3Body:
+      "Contrato pulse y cómo cablear excelso-pulse-express sin iniciar sesión.",
     footer: "© Excelso Pulse — MIT",
   },
   header: {
@@ -478,7 +495,8 @@ export const esMessages = {
     editSource: "Editar origen",
     deleteSource: "Eliminar origen",
     openApp: "Abrir app (front)",
-    noAppUrl: "Sin URL de front. Edita el origen para guardar el enlace público de la app.",
+    noAppUrl:
+      "Sin URL de front. Edita el origen para guardar el enlace público de la app.",
     viewFullLogs: "Ver logs completos",
   },
   projects: {
@@ -578,8 +596,7 @@ export const esMessages = {
   },
   register: {
     title: "Crear cuenta",
-    subtitle:
-      "Los datos se guardan en MongoDB. Usa una contraseña de al menos 8 caracteres.",
+    subtitle: " Usa una contraseña de al menos 8 caracteres.",
     name: "Nombre",
     email: "Correo",
     password: "Contraseña",
@@ -654,7 +671,8 @@ export const esMessages = {
   },
   accountPage: {
     title: "Cuenta",
-    subtitle: "Empresa o nombre freelance, datos de contacto, contraseña y sesión.",
+    subtitle:
+      "Empresa o nombre freelance, datos de contacto, contraseña y sesión.",
     sectionProfile: "Perfil y organización",
     organizationLabel: "Empresa o nombre freelance",
     organizationPlaceholder: "ej. ACME SL o Freelance",
@@ -713,14 +731,15 @@ export const esMessages = {
     createError: "No se pudo crear la alerta.",
     yourAlerts: "Tus alertas",
     empty: "Aún no hay alertas. Crea una arriba para un proyecto registrado.",
-    noProjects: "Registra al menos un origen pulse en el panel antes de crear alertas.",
+    noProjects:
+      "Registra al menos un origen pulse en el panel antes de crear alertas.",
     toggle: "Activar o desactivar alerta",
     remove: "Quitar alerta",
   },
-} as unknown as typeof enMessages
+} as unknown as typeof enMessages;
 
-export type Messages = typeof enMessages
+export type Messages = typeof enMessages;
 
 export function getMessages(locale: Locale): Messages {
-  return locale === "en" ? enMessages : esMessages
+  return locale === "en" ? enMessages : esMessages;
 }
