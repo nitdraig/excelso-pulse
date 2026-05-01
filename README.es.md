@@ -170,10 +170,12 @@ Desde otra app, apunta a la carpeta con `npm install /ruta/a/excelso-pulse/npm` 
 
 ## Documentación
 
+- [`docs/estrategia-voz-hub.md`](docs/estrategia-voz-hub.md) — Estrategia definitiva de voz: Hub vs NPM, seguridad del token, roadmap, TTS y canales (Dialogflow, HA, Google Home).
 - [`docs/estrategia-y-enfoque.md`](docs/estrategia-y-enfoque.md) — Estrategia de producto, fases y checklist de avance.
 - [`web-app/docs/pulse-aggregator.md`](web-app/docs/pulse-aggregator.md) — Comportamiento del agregador, variables y endpoints.
 - [`web-app/docs/health-business-pulse.md`](web-app/docs/health-business-pulse.md) — Contrato de referencia del backend `GET /internal/pulse`.
 - [`web-app/docs/deploy-voice-vercel.md`](web-app/docs/deploy-voice-vercel.md) — Despliegue del webhook de voz y gestión de secretos (Vercel/VPS).
+- [`web-app/docs/voice-fulfillment.md`](web-app/docs/voice-fulfillment.md) — Fulfillment Dialogflow ES, endpoint de reporte JSON, `curl` y contratos `pulse_contract`.
 
 ## Seguridad
 

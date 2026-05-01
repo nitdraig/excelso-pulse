@@ -1,45 +1,45 @@
-import type { AppPulse } from "@/lib/types"
-import { defaultInfra } from "@/lib/pulse/normalize"
-import type { PulseSummaryEntry } from "@/lib/pulse/types"
-import { resolvePulsePresentation } from "@/lib/pulse/derive-presentation"
+import type { AppPulse } from "@/lib/types";
+import { defaultInfra } from "@/lib/pulse/normalize";
+import type { PulseSummaryEntry } from "@/lib/pulse/types";
+import { resolvePulsePresentation } from "@/lib/pulse/derive-presentation";
 
 export type ProjectRegistryLean = {
-  _id: { toString(): string }
-  slug?: string
-  name: string
-  description?: string
-  icon?: string
+  _id: { toString(): string };
+  slug?: string;
+  name: string;
+  description?: string;
+  icon?: string;
   /** URL pública del front (solo UI). */
-  appUrl?: string
-  pulseUrl?: string
-  bearerEnc?: string
-  secretEnvKey?: string
-  createdAt?: Date
-  updatedAt?: Date
-}
+  appUrl?: string;
+  pulseUrl?: string;
+  bearerEnc?: string;
+  secretEnvKey?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
 function registryId(doc: ProjectRegistryLean): string {
-  if (doc.slug && doc.slug.length > 0) return doc.slug
-  return doc._id.toString()
+  if (doc.slug && doc.slug.length > 0) return doc.slug;
+  return doc._id.toString();
 }
 
 function entryByAppId(
   entries: PulseSummaryEntry[],
   appId: string,
 ): PulseSummaryEntry | undefined {
-  return entries.find((e) => e.appId === appId)
+  return entries.find((e) => e.appId === appId);
 }
 
 function withAppUrl(doc: ProjectRegistryLean, pulse: AppPulse): AppPulse {
-  const u = doc.appUrl?.trim()
-  return u ? { ...pulse, appUrl: u } : pulse
+  const u = doc.appUrl?.trim();
+  return u ? { ...pulse, appUrl: u } : pulse;
 }
 
 function hasBearerConfigured(doc: ProjectRegistryLean): boolean {
-  const enc = doc.bearerEnc?.trim()
-  if (enc && enc.length > 0) return true
-  const env = doc.secretEnvKey?.trim()
-  return !!(env && env.length > 0)
+  const enc = doc.bearerEnc?.trim();
+  if (enc && enc.length > 0) return true;
+  const env = doc.secretEnvKey?.trim();
+  return !!(env && env.length > 0);
 }
 
 /**
@@ -50,14 +50,19 @@ export function mergeRegistryWithPulseEntries(
   entries: PulseSummaryEntry[],
 ): AppPulse[] {
   return projects.map((doc) => {
-    const id = registryId(doc)
-    const live = entryByAppId(entries, id)
-    const created = doc.createdAt ?? new Date()
-    const updated = doc.updatedAt ?? new Date()
+    const id = registryId(doc);
+    const live = entryByAppId(entries, id);
+    const created = doc.createdAt ?? new Date();
+    const updated = doc.updatedAt ?? new Date();
 
     if (!doc.pulseUrl || !hasBearerConfigured(doc)) {
-      const now = new Date().toISOString()
-      const pres = resolvePulsePresentation("unavailable", null, undefined, undefined)
+      const now = new Date().toISOString();
+      const pres = resolvePulsePresentation(
+        "unavailable",
+        null,
+        undefined,
+        undefined,
+      );
       const pulse: AppPulse = {
         id,
         name: doc.name,
@@ -85,13 +90,18 @@ export function mergeRegistryWithPulseEntries(
           },
         ],
         last_updated: updated.toISOString(),
-      }
-      return withAppUrl(doc, pulse)
+      };
+      return withAppUrl(doc, pulse);
     }
 
     if (!live) {
-      const now = new Date().toISOString()
-      const pres = resolvePulsePresentation("unavailable", null, undefined, undefined)
+      const now = new Date().toISOString();
+      const pres = resolvePulsePresentation(
+        "unavailable",
+        null,
+        undefined,
+        undefined,
+      );
       const pulse: AppPulse = {
         id,
         name: doc.name,
@@ -119,8 +129,8 @@ export function mergeRegistryWithPulseEntries(
           },
         ],
         last_updated: updated.toISOString(),
-      }
-      return withAppUrl(doc, pulse)
+      };
+      return withAppUrl(doc, pulse);
     }
 
     const pulse: AppPulse = {
@@ -136,15 +146,17 @@ export function mergeRegistryWithPulseEntries(
       kpis: live.kpis,
       infrastructure: live.infrastructure,
       ai_context: live.ai_context,
-      logs: live.logs.length ? live.logs : [
-        {
-          timestamp: live.fetchedAt,
-          event: "Sincronizado desde backend pulse",
-          type: "success" as const,
-        },
-      ],
+      logs: live.logs.length
+        ? live.logs
+        : [
+            {
+              timestamp: live.fetchedAt,
+              event: " Synced from backend pulse",
+              type: "success" as const,
+            },
+          ],
       last_updated: live.last_updated,
-    }
-    return withAppUrl(doc, pulse)
-  })
+    };
+    return withAppUrl(doc, pulse);
+  });
 }

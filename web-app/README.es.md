@@ -93,6 +93,17 @@ Rutas habituales usadas por la UI u otros BFF:
 
 Las respuestas no exponen el Bearer en claro ni detalles del cifrado.
 
+### API de voz (sin sesión; token en Cuenta)
+
+Rutas bajo **`/api/v1/voice/`** — autenticación con Bearer (token por usuario recomendado; opción legacy documentada). No uses el token en query string.
+
+| Ruta | `pulse_contract` (respuesta) | `pulse_version` |
+|------|-------------------------------|----------------|
+| `POST …/voice/fulfillment` | `voice-fulfillment-v1` | `1` |
+| `POST …/voice/report` | `voice-report-v1` | `1` |
+
+Detalle, `curl`, TTS y rate limit: [`docs/voice-fulfillment.md`](docs/voice-fulfillment.md) · despliegue: [`docs/deploy-voice-vercel.md`](docs/deploy-voice-vercel.md) · estrategia: [`../docs/estrategia-voz-hub.md`](../docs/estrategia-voz-hub.md).
+
 ## Paquete npm: `excelso-pulse-express`
 
 El código fuente está en [`../npm/`](../npm/). Implementa el JSON **Health & Business Pulse** (`pulse_version: "1"`) que esta app agrega, con comprobaciones opcionales de **MongoDB** en infraestructura y protección **Bearer** en el helper de Express.
@@ -172,7 +183,8 @@ Desde otra app, apunta a la carpeta con `npm install /ruta/a/excelso-pulse/npm` 
 - [`../docs/estrategia-y-enfoque.md`](../docs/estrategia-y-enfoque.md) — Estrategia del monorepo, fases y checklist.
 - [`docs/pulse-aggregator.md`](docs/pulse-aggregator.md) — Comportamiento del agregador, variables y endpoints.
 - [`docs/health-business-pulse.md`](docs/health-business-pulse.md) — Contrato de referencia del backend `GET /internal/pulse`.
-- [`docs/deploy-voice-vercel.md`](docs/deploy-voice-vercel.md) — Despliegue del webhook de voz y secretos (Vercel/VPS).
+- [`docs/voice-fulfillment.md`](docs/voice-fulfillment.md) — Webhook Dialogflow ES, reporte JSON y contratos de voz.
+- [`docs/deploy-voice-vercel.md`](docs/deploy-voice-vercel.md) — Despliegue de voz y secretos (Vercel/VPS).
 
 ## Seguridad
 

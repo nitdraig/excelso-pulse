@@ -1,6 +1,6 @@
 # Deployment voz (Vercel / VPS)
 
-Esta guía cubre el despliegue operativo del webhook de voz para `POST /api/v1/voice/fulfillment`.
+Esta guía cubre el despliegue operativo de **`POST /api/v1/voice/fulfillment`** (Dialogflow) y **`POST /api/v1/voice/report`** (JSON para scripts).
 
 ## Variables de entorno requeridas
 
@@ -15,6 +15,7 @@ Recomendadas para voz:
 - `VOICE_PULSE_CACHE_TTL_MS` (default 45000)
 - `VOICE_PULSE_ROUND_TIMEOUT_MS` (default 9000)
 - `VOICE_PULSE_FETCH_TIMEOUT_MS` (default 4000)
+- `VOICE_TTS_MAX_CHARS` (default efectivo ~720; `≤0` = sin truncado tras sanitizar)
 - `PULSE_MAX_CONCURRENCY` (default efectivo: 8 en rama voz si no está definido)
 
 ## Vercel
@@ -23,9 +24,8 @@ Recomendadas para voz:
 2. Carga las variables de arriba en `Production` (y `Preview` si aplica).
 3. Redeploy del proyecto para que tomen efecto.
 4. Verifica:
-   - `POST https://<dominio>/api/v1/voice/fulfillment`
-   - Header `Authorization: Bearer <VOICE_WEBHOOK_SECRET>`
-   - Body JSON Dialogflow ES mínimo con `queryResult`.
+   - **Fulfillment:** `POST https://<dominio>/api/v1/voice/fulfillment` con Dialogflow ES mínimo (`queryResult`).
+   - **Reporte:** `POST https://<dominio>/api/v1/voice/report` con Bearer del token de usuario o del secreto legacy (ver `voice-fulfillment.md`).
 
 ## VPS / Node
 
@@ -50,7 +50,28 @@ curl -sS -X POST "https://<dominio>/api/v1/voice/fulfillment" \
   -d '{"queryResult":{"queryText":"estado","languageCode":"es"}}'
 ```
 
-Debe devolver `fulfillmentText` y `fulfillmentMessages`.
+Debe devolver `fulfillmentText` y `fulfillmentMessages` (y opcionalmente `pulse_contract` / `pulse_version` en el mismo JSON).
+
+### Verificación rápida del reporte JSON
+
+Token por usuario (recomendado):
+
+```bash
+curl -sS -X POST "https://<dominio>/api/v1/voice/report" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <VOICE_USER_TOKEN>" \
+  -d '{"lang":"es"}'
+```
+
+Legacy (secreto de instancia + correo):
+
+```bash
+curl -sS -X POST "https://<dominio>/api/v1/voice/report" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <VOICE_WEBHOOK_SECRET>" \
+  -H "x-excelso-user-email: tu@correo.com" \
+  -d '{}'
+```
 
 ## Validación en Google Home (manual)
 

@@ -13,6 +13,7 @@ import { getMessages } from "@/lib/i18n/messages"
 import type { Locale } from "@/lib/i18n/types"
 import { LOCALE_STORAGE_KEY } from "@/lib/i18n/types"
 import { getByPath, interpolate } from "@/lib/i18n/translate"
+import { Toaster } from "@/components/ui/toaster"
 
 type I18nContextValue = {
   locale: Locale
@@ -69,7 +70,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t])
 
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
+  return (
+    <I18nContext.Provider value={value}>
+      {children}
+      <Toaster />
+    </I18nContext.Provider>
+  )
 }
 
 export function useTranslation() {

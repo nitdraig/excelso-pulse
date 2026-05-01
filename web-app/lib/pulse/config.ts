@@ -71,6 +71,14 @@ export function getPulseRateLimitWindowMs(): number {
   return Number.isFinite(n) && n > 0 ? n : 60_000
 }
 
+/** Tope de caracteres del texto enviado a TTS (sanitización + truncado). ≤0 = sin límite. */
+export function getVoiceTtsMaxChars(): number {
+  const n = Number(process.env.VOICE_TTS_MAX_CHARS)
+  if (!Number.isFinite(n)) return 720
+  if (n <= 0) return 0
+  return Math.floor(n)
+}
+
 /** Si es true, se fusionan fuentes de `PULSE_SOURCES` (solo despliegues single-tenant). */
 export function mergeEnvPulseSources(): boolean {
   return process.env.PULSE_MERGE_ENV_SOURCES === "1" || process.env.PULSE_MERGE_ENV_SOURCES === "true"

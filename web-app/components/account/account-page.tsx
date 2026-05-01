@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { signOut, useSession } from "next-auth/react"
-import { Copy, KeyRound, Loader2, LogOut, RefreshCw, Trash2 } from "lucide-react"
+import { Copy, House, KeyRound, Loader2, LogOut, RefreshCw, Terminal, Trash2 } from "lucide-react"
 import { AppSubHeader } from "@/components/app-sub-header"
 import { MobileTabBar } from "@/components/mobile-tab-bar"
 import { useTranslation } from "@/components/i18n-provider"
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { toast } from "@/hooks/use-toast"
 
 type ProfileDto = {
   email: string
@@ -70,7 +71,6 @@ export function AccountPage() {
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [voiceCreating, setVoiceCreating] = useState(false)
   const [createdVoiceToken, setCreatedVoiceToken] = useState<string>("")
-  const [voiceCopyMessage, setVoiceCopyMessage] = useState<string | null>(null)
 
   const [voiceDeleteOpen, setVoiceDeleteOpen] = useState(false)
   const [voiceDeleting, setVoiceDeleting] = useState(false)
@@ -239,7 +239,6 @@ export function AccountPage() {
   async function createOrRotateVoiceToken() {
     setVoiceMessage(null)
     setVoiceError(null)
-    setVoiceCopyMessage(null)
     setVoiceCreating(true)
     try {
       const res = await fetch("/api/account/voice-token", { method: "POST" })
@@ -262,9 +261,99 @@ export function AccountPage() {
     if (!createdVoiceToken) return
     try {
       await navigator.clipboard.writeText(createdVoiceToken)
-      setVoiceCopyMessage(t("accountPage.voiceCopied"))
+      toast({
+        title: t("accountPage.copyToastSuccessTitle"),
+        description: t("accountPage.voiceCopied"),
+        duration: 4000,
+      })
     } catch {
-      setVoiceCopyMessage(t("accountPage.voiceCopyError"))
+      toast({
+        variant: "destructive",
+        title: t("accountPage.copyToastErrorTitle"),
+        description: t("accountPage.voiceCopyError"),
+        duration: 6000,
+      })
+    }
+  }
+
+  async function copyVoiceReportCurl() {
+    setVoiceError(null)
+    const base =
+      typeof window !== "undefined" ? window.location.origin.replace(/\/$/, "") : ""
+    const snippet = [
+      `curl -sS -X POST "${base}/api/v1/voice/report" \\`,
+      `  -H "Content-Type: application/json" \\`,
+      `  -H "Authorization: Bearer YOUR_VOICE_TOKEN" \\`,
+      `  -d '{"lang":"es"}'`,
+    ].join("\n")
+    try {
+      await navigator.clipboard.writeText(snippet)
+      toast({
+        title: t("accountPage.copyToastSuccessTitle"),
+        description: t("accountPage.voiceCurlCopied"),
+        duration: 4000,
+      })
+    } catch {
+      toast({
+        variant: "destructive",
+        title: t("accountPage.copyToastErrorTitle"),
+        description: t("accountPage.voiceCopyError"),
+        duration: 6000,
+      })
+    }
+  }
+
+  async function copyVoiceHaSnippet() {
+    setVoiceError(null)
+    const base =
+      typeof window !== "undefined" ? window.location.origin.replace(/\/$/, "") : ""
+    const snippet = [
+      `rest_command:`,
+      `  pulse_voice_report:`,
+      `    url: "${base}/api/v1/voice/report"`,
+      `    method: POST`,
+      `    content_type: "application/json"`,
+      `    headers:`,
+      `      Authorization: "Bearer YOUR_VOICE_TOKEN"`,
+      `    payload: '{"lang":"es"}'`,
+      ``,
+      `script:`,
+      `  pulse_reporte_voz:`,
+      `    alias: "Pulse: reporte por voz"`,
+      `    mode: single`,
+      `    sequence:`,
+      `      - action: rest_command.pulse_voice_report`,
+      `        response_variable: pulse_resp`,
+      `      - variables:`,
+      `          pulse_text: >-`,
+      `            {% if pulse_resp is defined and pulse_resp.status == 200 and pulse_resp.content is mapping %}`,
+      `              {{ pulse_resp.content.message | default('No pude obtener el reporte de Pulse.') }}`,
+      `            {% else %}`,
+      `              No pude conectar con Pulse en este momento.`,
+      `            {% endif %}`,
+      `      # Change media_player.salon to your Nest/Cast entity`,
+      `      - action: tts.google_translate_say`,
+      `        target:`,
+      `          entity_id: media_player.salon`,
+      `        data:`,
+      `          message: "{{ pulse_text }}"`,
+      `          language: "es"`,
+      ``,
+    ].join("\n")
+    try {
+      await navigator.clipboard.writeText(snippet)
+      toast({
+        title: t("accountPage.copyToastSuccessTitle"),
+        description: t("accountPage.voiceHaCopied"),
+        duration: 4000,
+      })
+    } catch {
+      toast({
+        variant: "destructive",
+        title: t("accountPage.copyToastErrorTitle"),
+        description: t("accountPage.voiceCopyError"),
+        duration: 6000,
+      })
     }
   }
 
@@ -281,7 +370,6 @@ export function AccountPage() {
       }
       setVoiceDeleteOpen(false)
       setCreatedVoiceToken("")
-      setVoiceCopyMessage(null)
       setVoiceMessage(t("accountPage.voiceDeleted"))
       await loadVoiceStatus()
     } catch {
@@ -470,10 +558,13 @@ export function AccountPage() {
                     : t("accountPage.voiceStatusNotConfigured")}
                 </p>
                 {voiceStatus?.lastUsedAt ? (
-                  <p className="text-muted-foreground">
-                    {t("accountPage.voiceLastUsed")}{" "}
-                    {new Date(voiceStatus.lastUsedAt).toLocaleString()}
-                  </p>
+                  <div className="space-y-1 text-muted-foreground">
+                    <p>
+                      {t("accountPage.voiceLastUsed")}{" "}
+                      {new Date(voiceStatus.lastUsedAt).toLocaleString()}
+                    </p>
+                    <p className="text-xs">{t("accountPage.voiceLastUsedSub")}</p>
+                  </div>
                 ) : null}
               </div>
             )}
@@ -503,7 +594,35 @@ export function AccountPage() {
               <Trash2 className="mr-2 h-4 w-4" />
               {t("accountPage.voiceRevoke")}
             </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!voiceStatus?.configured}
+              onClick={() => void copyVoiceReportCurl()}
+              className="w-full sm:w-auto"
+            >
+              <Terminal className="mr-2 h-4 w-4" />
+              {t("accountPage.voiceCopyCurlReport")}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!voiceStatus?.configured}
+              onClick={() => void copyVoiceHaSnippet()}
+              className="w-full sm:w-auto"
+            >
+              <House className="mr-2 h-4 w-4" />
+              {t("accountPage.voiceCopyHaSnippet")}
+            </Button>
           </div>
+          {voiceStatus?.configured ? (
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p>{t("accountPage.voiceReportCurlHint")}</p>
+              <p>{t("accountPage.voiceHaHint")}</p>
+            </div>
+          ) : null}
         </section>
 
         <Separator />
@@ -573,7 +692,6 @@ export function AccountPage() {
           setVoiceDialogOpen(open)
           if (!open) {
             setCreatedVoiceToken("")
-            setVoiceCopyMessage(null)
           }
         }}
       >
@@ -587,7 +705,6 @@ export function AccountPage() {
               <Label htmlFor="voice-token">{t("accountPage.voiceTokenLabel")}</Label>
               <Input id="voice-token" value={createdVoiceToken} readOnly />
               <p className="text-xs text-muted-foreground">{t("accountPage.voiceTokenHint")}</p>
-              {voiceCopyMessage ? <p className="text-sm text-muted-foreground">{voiceCopyMessage}</p> : null}
             </div>
           ) : null}
           <DialogFooter className="gap-2 sm:gap-0">

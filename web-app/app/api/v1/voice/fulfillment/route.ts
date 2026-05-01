@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server"
-import { connectDB } from "@/lib/db/connect"
-import { UserModel, VoiceIntegrationModel } from "@/lib/db/models"
+import { VoiceIntegrationModel } from "@/lib/db/models"
 import {
   getVoiceWebhookAltHeaderName,
   getPulseRateLimitMax,
   getPulseRateLimitWindowMs,
-  getVoiceDefaultUserEmail,
-  getVoiceWebhookSecret,
+  getVoiceTtsMaxChars,
 } from "@/lib/pulse/config"
 import { loadPulseAggregateForUser } from "@/lib/pulse/load-for-user"
 import { checkRateLimit } from "@/lib/rate-limit"
@@ -19,13 +17,8 @@ import {
   buildVoiceTextFromReport,
   localeFromLanguageCode,
 } from "@/lib/voice/build-voice-summary"
-import {
-  extractVoiceTokenFromRequest,
-  hashVoiceToken,
-} from "@/lib/voice/voice-user-token"
-import { timingSafeEqualString } from "@/lib/voice/validate-voice-webhook-auth"
-
-const USER_EMAIL_HEADER = "x-excelso-user-email"
+import { resolveVoiceIdentity } from "@/lib/voice/resolve-voice-identity"
+import { prepareVoiceTtsText } from "@/lib/voice/tts-prepare"
 
 export async function GET() {
   return NextResponse.json(
@@ -59,62 +52,34 @@ export async function POST(request: Request) {
   }
 
   const locale = localeFromLanguageCode(parsed.languageCode)
-  const secret = getVoiceWebhookSecret()
-  const token = extractVoiceTokenFromRequest(
-    request,
-    getVoiceWebhookAltHeaderName(),
-  )
-  if (!token) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
-  }
+  const resolved = await resolveVoiceIdentity(request, getVoiceWebhookAltHeaderName())
 
-  await connectDB()
-
-  // 1) Auth multiusuario por token (nuevo flujo recomendado).
-  const voiceRow = await VoiceIntegrationModel.findOne({
-    tokenHash: hashVoiceToken(token),
-    active: true,
-  })
-    .select("ownerId")
-    .lean()
-
-  let userId = voiceRow?.ownerId ? String(voiceRow.ownerId) : ""
-
-  // 2) Fallback legacy por secreto de instancia + email (compatibilidad).
-  if (!userId && secret.length && timingSafeEqualString(token, secret)) {
-    const headerEmail =
-      request.headers.get(USER_EMAIL_HEADER)?.trim().toLowerCase() ?? ""
-    const defaultEmail = getVoiceDefaultUserEmail()
-    const targetEmail = headerEmail || defaultEmail
-
-    if (!targetEmail) {
-      const msg =
-        "Configura VOICE_DEFAULT_USER_EMAIL en el servidor o envía la cabecera x-excelso-user-email."
-      return NextResponse.json(buildDialogflowEsFulfillmentResponse(msg), {
-        status: 200,
-      })
+  if (!resolved.ok) {
+    switch (resolved.code) {
+      case "missing_token":
+      case "unauthorized":
+        return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+      case "legacy_missing_target":
+        return NextResponse.json(
+          buildDialogflowEsFulfillmentResponse(
+            locale === "es" ? resolved.message.es : resolved.message.en,
+          ),
+          { status: 200 },
+        )
+      case "legacy_unknown_user":
+        return NextResponse.json(
+          buildDialogflowEsFulfillmentResponse(
+            locale === "es" ? resolved.message.es : resolved.message.en,
+          ),
+          { status: 200 },
+        )
+      default:
+        return NextResponse.json({ error: "unauthorized" }, { status: 401 })
     }
-    const user = await UserModel.findOne({ email: targetEmail })
-      .select("_id")
-      .lean()
-    if (!user?._id) {
-      const msg =
-        locale === "es"
-          ? "No encontré un usuario con ese correo en esta instancia."
-          : "No user found with that email on this instance."
-      return NextResponse.json(buildDialogflowEsFulfillmentResponse(msg), {
-        status: 200,
-      })
-    }
-    userId = String(user._id)
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
   const rl = checkRateLimit(
-    `voice_fulfillment:${userId}`,
+    `voice_fulfillment:${resolved.userId}`,
     getPulseRateLimitMax(),
     getPulseRateLimitWindowMs(),
   )
@@ -132,24 +97,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (voiceRow?.ownerId) {
+    if (resolved.voiceIntegrationId) {
       void VoiceIntegrationModel.updateOne(
-        { _id: (voiceRow as { _id?: unknown })._id },
+        { _id: resolved.voiceIntegrationId },
         { $set: { lastUsedAt: new Date() } },
       )
     }
     const { entries, roundDurationMs, fromCache } =
-      await loadPulseAggregateForUser(userId, { voice: true })
+      await loadPulseAggregateForUser(resolved.userId, { voice: true })
     const report = buildVoiceReportFromEntries(entries, locale)
-    const text = buildVoiceTextFromReport(report)
     const suffix =
       locale === "es"
         ? ` Ronda en ${roundDurationMs} milisegundos${fromCache ? ", desde caché" : ""}.`
         : ` Round in ${roundDurationMs} milliseconds${fromCache ? ", from cache" : ""}.`
-    return NextResponse.json(
-      buildDialogflowEsFulfillmentResponse(text + suffix),
-      { status: 200 },
-    )
+    const raw = buildVoiceTextFromReport(report) + suffix
+    const { text } = prepareVoiceTtsText(raw, getVoiceTtsMaxChars())
+    return NextResponse.json(buildDialogflowEsFulfillmentResponse(text), { status: 200 })
   } catch (e) {
     console.error("[voice] fulfillment", e)
     const msg =

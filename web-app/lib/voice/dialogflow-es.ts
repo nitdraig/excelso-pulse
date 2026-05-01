@@ -28,10 +28,15 @@ export function buildDialogflowEsFulfillmentResponse(fulfillmentText: string): {
   fulfillmentText: string
   fulfillmentMessages: { text: { text: string[] } }[]
   source: string
+  /** Contrato estable para clientes que lean el JSON crudo (Assistant/bridges). */
+  pulse_contract: "voice-fulfillment-v1"
+  pulse_version: 1
 } {
   return {
     fulfillmentText,
     fulfillmentMessages: [{ text: { text: [fulfillmentText] } }],
     source: "excelso-pulse",
+    pulse_contract: "voice-fulfillment-v1",
+    pulse_version: 1,
   }
 }
