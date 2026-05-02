@@ -31,6 +31,25 @@ describe("aggregatePulseSources", () => {
     expect(entries[0].error?.code).toBe("http_error")
   })
 
+  it("acepta JSON con BOM UTF-8 al inicio del cuerpo", async () => {
+    const body = JSON.stringify({
+      pulse_version: "1",
+      status: "operational",
+      metrics: { latency_ms: 10, uptime_percent: 99 },
+    })
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => `\uFEFF${body}`,
+    }) as unknown as typeof fetch
+
+    const { entries } = await aggregatePulseSources([
+      { appId: "bom", pulseUrl: "https://bom.test/internal/pulse", bearerToken: "tok" },
+    ])
+
+    expect(entries[0].status).toBe("operational")
+    expect(entries[0].error).toBeUndefined()
+  })
+
   it("normaliza JSON válido del backend", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,

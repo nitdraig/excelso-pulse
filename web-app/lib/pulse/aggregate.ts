@@ -1,4 +1,5 @@
 import { defaultInfra, normalizeBackendPulse } from "@/lib/pulse/normalize"
+import { parsePulseResponseBody } from "@/lib/pulse/parse-pulse-response"
 import type { PulseFetchErrorCode, PulseSource, PulseSummaryEntry } from "@/lib/pulse/types"
 import {
   getPulseFetchTimeoutMs,
@@ -81,11 +82,11 @@ async function fetchPulseSource(
       },
       kpis: [],
       infrastructure: defaultInfra(),
-      ai_context: "Falta el token en el servidor: define la variable de entorno indicada en el registro del origen.",
+      ai_context: "",
       logs: [
         {
           timestamp: fetchedAt,
-          event: "Secreto no configurado en el agregador",
+          event: "Bearer secret not resolved for aggregator",
           type: "warning",
         },
       ],
@@ -124,11 +125,11 @@ async function fetchPulseSource(
         },
         kpis: [],
         infrastructure: defaultInfra(),
-        ai_context: `El backend respondió HTTP ${res.status}.`,
+        ai_context: "",
         logs: [
           {
             timestamp: fetchedAt,
-            event: `HTTP ${res.status} en pulse`,
+            event: `Pulse HTTP ${res.status}`,
             type: "error",
           },
         ],
@@ -142,42 +143,73 @@ async function fetchPulseSource(
     }
 
     const text = await res.text()
-    if (!text.trim()) {
-      return {
-        appId: source.appId,
-        contract_version: "unknown",
-        pulse_version: "?",
-        status: "unavailable",
-        ...PRESENTATION_FETCH_FAILURE,
-        name: source.appId,
-        description: "",
-        icon: "📦",
-        metrics: {
-          latency_ms: 0,
-          uptime_percent: 0,
-          requests_24h: 0,
-          error_rate: 0,
-        },
-        kpis: [],
-        infrastructure: defaultInfra(),
-        ai_context: "Respuesta vacía del endpoint pulse.",
-        logs: [
-          {
-            timestamp: fetchedAt,
-            event: "Cuerpo vacío",
-            type: "warning",
+    const parsedBody = parsePulseResponseBody(text)
+    if (!parsedBody.ok) {
+      if (parsedBody.reason === "empty") {
+        return {
+          appId: source.appId,
+          contract_version: "unknown",
+          pulse_version: "?",
+          status: "unavailable",
+          ...PRESENTATION_FETCH_FAILURE,
+          name: source.appId,
+          description: "",
+          icon: "📦",
+          metrics: {
+            latency_ms: 0,
+            uptime_percent: 0,
+            requests_24h: 0,
+            error_rate: 0,
           },
-        ],
-        last_updated: fetchedAt,
-        fetchedAt,
-        error: { code: "empty_body", message: "Sin cuerpo" },
+          kpis: [],
+          infrastructure: defaultInfra(),
+          ai_context: "",
+          logs: [
+            {
+              timestamp: fetchedAt,
+              event: "Empty pulse response body",
+              type: "warning",
+            },
+          ],
+          last_updated: fetchedAt,
+          fetchedAt,
+          error: { code: "empty_body", message: "Empty response body" },
+        }
       }
-    }
-
-    let json: unknown
-    try {
-      json = JSON.parse(text) as unknown
-    } catch {
+      if (parsedBody.reason === "html") {
+        return {
+          appId: source.appId,
+          contract_version: "unknown",
+          pulse_version: "?",
+          status: "unavailable",
+          ...PRESENTATION_FETCH_FAILURE,
+          name: source.appId,
+          description: "",
+          icon: "📦",
+          metrics: {
+            latency_ms: 0,
+            uptime_percent: 0,
+            requests_24h: 0,
+            error_rate: 0,
+          },
+          kpis: [],
+          infrastructure: defaultInfra(),
+          ai_context: "",
+          logs: [
+            {
+              timestamp: fetchedAt,
+              event: "HTML or non-JSON response from pulse URL",
+              type: "error",
+            },
+          ],
+          last_updated: fetchedAt,
+          fetchedAt,
+          error: {
+            code: "html_response",
+            message: "Response body looks like HTML, not JSON",
+          },
+        }
+      }
       return {
         appId: source.appId,
         contract_version: "unknown",
@@ -195,21 +227,24 @@ async function fetchPulseSource(
         },
         kpis: [],
         infrastructure: defaultInfra(),
-        ai_context: "JSON inválido en la respuesta pulse.",
+        ai_context: "",
         logs: [
           {
             timestamp: fetchedAt,
-            event: "JSON inválido",
+            event: "Invalid JSON in pulse response",
             type: "error",
           },
         ],
         last_updated: fetchedAt,
         fetchedAt,
-        error: { code: "invalid_json", message: "JSON inválido" },
+        error: { code: "invalid_json", message: "Response body is not valid JSON" },
       }
     }
 
-    const { pulse, contract_version } = normalizeBackendPulse(json, source.appId)
+    const { pulse, contract_version, validationError } = normalizeBackendPulse(
+      parsedBody.json,
+      source.appId,
+    )
     return {
       appId: source.appId,
       contract_version,
@@ -227,10 +262,11 @@ async function fetchPulseSource(
       logs: pulse.logs,
       last_updated: pulse.last_updated,
       fetchedAt,
+      error: validationError,
     }
   } catch (e: unknown) {
     const name = e instanceof Error ? e.name : ""
-    const msg = e instanceof Error ? e.message : "Error de red"
+    const msg = e instanceof Error ? e.message : "Network error"
     let code: PulseFetchErrorCode = "network"
     if (name === "AbortError") {
       code = perRequestSignal.aborted ? "aborted" : "timeout"
@@ -252,7 +288,7 @@ async function fetchPulseSource(
       },
       kpis: [],
       infrastructure: defaultInfra(),
-      ai_context: `No se pudo obtener pulse: ${msg}`,
+      ai_context: "",
       logs: [
         {
           timestamp: fetchedAt,

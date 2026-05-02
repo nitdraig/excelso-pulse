@@ -146,15 +146,24 @@ export function mergeRegistryWithPulseEntries(
       kpis: live.kpis,
       infrastructure: live.infrastructure,
       ai_context: live.ai_context,
+      pulseFetchError: live.error,
       logs: live.logs.length
         ? live.logs
-        : [
-            {
-              timestamp: live.fetchedAt,
-              event: " Synced from backend pulse",
-              type: "success" as const,
-            },
-          ],
+        : (() => {
+            const healthy =
+              live.status === "operational" &&
+              live.readiness === "ready" &&
+              live.user_impact === "none"
+            return [
+              {
+                timestamp: live.fetchedAt,
+                event: healthy
+                  ? "Pulse snapshot received."
+                  : "Pulse snapshot received; check readiness, impact, or backend payload.",
+                type: healthy ? ("success" as const) : ("warning" as const),
+              },
+            ]
+          })(),
       last_updated: live.last_updated,
     };
     return withAppUrl(doc, pulse);

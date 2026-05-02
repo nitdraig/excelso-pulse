@@ -33,6 +33,18 @@ export interface PulseLog {
   type: "info" | "warning" | "error" | "success"
 }
 
+/** Códigos de fallo al obtener o interpretar pulse en el Hub (texto UI vía i18n). */
+export type PulseFetchErrorCode =
+  | "missing_secret"
+  | "timeout"
+  | "aborted"
+  | "http_error"
+  | "invalid_json"
+  | "html_response"
+  | "empty_body"
+  | "network"
+  | "pulse_schema_mismatch"
+
 export interface AppPulse {
   id: string
   name: string
@@ -51,4 +63,6 @@ export interface AppPulse {
   ai_context: string
   logs: PulseLog[]
   last_updated: string
+  /** Si existe, el panel muestra mensaje localizado en lugar del texto crudo del agregador. */
+  pulseFetchError?: { code: PulseFetchErrorCode; message: string }
 }

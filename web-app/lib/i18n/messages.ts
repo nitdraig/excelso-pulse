@@ -74,6 +74,23 @@ export const enMessages = {
     title: "Excelso Pulse — portfolio summary",
     speaking: "Speaking…",
   },
+  pulseErrors: {
+    unknown: "No AI summary text was returned for this source.",
+    missing_secret:
+      "The Hub has no Bearer token for this source. Set the secret env key on the server or save a token in the project.",
+    timeout: "The pulse request timed out. Check that the backend URL is reachable from Pulse.",
+    aborted: "The pulse request was cancelled (round timeout or navigation).",
+    http_error: "The pulse endpoint returned an HTTP error.",
+    http_error_detail: "The pulse endpoint returned HTTP {status}.",
+    invalid_json:
+      "The pulse URL did not return valid JSON (wrong path, truncated body, or an HTML error page). Ensure GET /internal/pulse returns JSON.",
+    html_response:
+      "The response looks like HTML instead of JSON — often a 404 page, login wall, or wrong reverse-proxy path.",
+    empty_body: "The pulse endpoint returned an empty body.",
+    network: "Could not reach the pulse endpoint (network or DNS error).",
+    pulse_schema_mismatch:
+      "JSON was received but does not match the Pulse contract. Compare your payload with the docs for GET /internal/pulse.",
+  },
   status: {
     operational: "Operational",
     degraded: "Degraded",
@@ -128,6 +145,10 @@ export const enMessages = {
     openApp: "Open app (front)",
     noAppUrl: "No front URL. Edit the source to save the public app link.",
     viewFullLogs: "View full logs",
+    aiContextEmpty:
+      "No narrative summary was returned for this source. Use metrics and activity below to assess health.",
+    aiContextBrief:
+      "Backend sent a short label only ({tag}). Configure `ai_context` in your pulse payload for a richer summary.",
   },
   projects: {
     newSource: "New source",
@@ -482,6 +503,24 @@ export const esMessages = {
     title: "Excelso Pulse — resumen del portfolio",
     speaking: "Hablando…",
   },
+  pulseErrors: {
+    unknown: "No hay texto de resumen para este origen.",
+    missing_secret:
+      "El Hub no tiene token Bearer para este origen. Configura la variable de entorno indicada o guarda un token en el proyecto.",
+    timeout:
+      "La petición al pulse expiró por tiempo. Comprueba que la URL del backend sea alcanzable desde Pulse.",
+    aborted: "La petición al pulse se canceló (timeout de ronda o navegación).",
+    http_error: "El endpoint pulse respondió con error HTTP.",
+    http_error_detail: "El endpoint pulse respondió HTTP {status}.",
+    invalid_json:
+      "La URL pulse no devolvió JSON válido (ruta incorrecta, cuerpo truncado o página HTML de error). Asegúrate de que GET /internal/pulse devuelva JSON.",
+    html_response:
+      "La respuesta parece HTML en lugar de JSON (suele ser 404, login o path incorrecto detrás del proxy).",
+    empty_body: "El endpoint pulse devolvió cuerpo vacío.",
+    network: "No se pudo alcanzar el endpoint pulse (red o DNS).",
+    pulse_schema_mismatch:
+      "Se recibió JSON pero no cumple el contrato Pulse. Revisa la documentación de GET /internal/pulse.",
+  },
   status: {
     operational: "Operativo",
     degraded: "Degradado",
@@ -537,6 +576,10 @@ export const esMessages = {
     noAppUrl:
       "Sin URL de front. Edita el origen para guardar el enlace público de la app.",
     viewFullLogs: "Ver logs completos",
+    aiContextEmpty:
+      "No hay resumen narrativo para este origen. Usa métricas y actividad abajo para valorar el estado.",
+    aiContextBrief:
+      "El backend solo envió una etiqueta corta ({tag}). Define `ai_context` en el JSON pulse para un resumen más útil.",
   },
   projects: {
     newSource: "Nuevo origen",

@@ -319,7 +319,11 @@ function kpisFromMetricsUnknown(
 export function normalizeBackendPulse(
   raw: unknown,
   appId: string,
-): { pulse: Omit<AppPulse, "id">; contract_version: string } {
+): {
+  pulse: Omit<AppPulse, "id">
+  contract_version: string
+  validationError?: { code: "pulse_schema_mismatch"; message: string }
+} {
   const parsed = pulseBody.safeParse(raw);
   if (!parsed.success) {
     const now = new Date().toISOString();
@@ -331,6 +335,10 @@ export function normalizeBackendPulse(
     );
     return {
       contract_version: "unknown",
+      validationError: {
+        code: "pulse_schema_mismatch",
+        message: "Pulse JSON did not match the expected contract",
+      },
       pulse: {
         name: appId,
         description: "",
@@ -342,11 +350,11 @@ export function normalizeBackendPulse(
         metrics: defaultMetrics(),
         kpis: [] as BusinessKPIs[],
         infrastructure: defaultInfra(),
-        ai_context: "Respuesta no reconocida o contrato incompatible.",
+        ai_context: "",
         logs: [
           {
             timestamp: now,
-            event: "No se pudo interpretar el JSON del backend",
+            event: "Pulse body failed schema validation",
             type: "error",
           },
         ],
@@ -399,6 +407,7 @@ export function normalizeBackendPulse(
 
   return {
     contract_version,
+    validationError: undefined,
     pulse: {
       name,
       description,

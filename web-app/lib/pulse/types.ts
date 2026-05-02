@@ -2,20 +2,14 @@ import type {
   AppStatus,
   BusinessKPIs,
   Infrastructure,
+  PulseFetchErrorCode,
   PulseLog,
   PulseMetrics,
   PulseReadiness,
   PulseUserImpact,
 } from "@/lib/types"
 
-export type PulseFetchErrorCode =
-  | "missing_secret"
-  | "timeout"
-  | "aborted"
-  | "http_error"
-  | "invalid_json"
-  | "empty_body"
-  | "network"
+export type { PulseFetchErrorCode }
 
 export type PulseSummaryEntry = {
   appId: string
