@@ -103,10 +103,12 @@ export function buildVoiceReportFromEntries(
   }
 }
 
+const VOICE_BLOCK_SEP = "\n\n"
+
 /**
  * Texto breve para TTS / fulfillment (reglas, sin LLM), generado desde `VoiceReport`.
- * Distingue fallos de lectura del Hub de indisponibilidad reportada por el backend;
- * aclara caché y que cada pregunta obtiene un informe nuevo (p. ej. Telegram / Dialogflow).
+ * Bloques separados por doble salto de línea (mejor lectura en Telegram).
+ * Distingue fallos de lectura del Hub de indisponibilidad reportada por el backend.
  */
 export function buildVoiceTextFromReport(report: VoiceReport): string {
   const {
@@ -129,112 +131,128 @@ export function buildVoiceTextFromReport(report: VoiceReport): string {
   const hasProblems = counts.outage > 0 || counts.limited > 0
 
   if (locale === "es") {
-    const parts: string[] = []
-    parts.push(
-      `Estado pulse consolidado: ${totalApps} ${totalApps === 1 ? "aplicación" : "aplicaciones"} registradas en esta consulta.`,
+    const paragraphs: string[] = []
+
+    paragraphs.push(
+      `Pulse · ${totalApps} ${totalApps === 1 ? "aplicación" : "aplicaciones"} monitorizadas.`,
     )
 
+    const detail: string[] = []
+
     if (outageFetchLabels.length > 0) {
-      parts.push(
-        `Para ${joinLabels(outageFetchLabels, locale)}, en esta consulta el Hub no obtuvo una lectura pulse válida (red, credenciales o tiempo de espera). Eso no equivale por sí solo a que el servicio esté caído; conviene repetir la pregunta en breve o revisar el panel web.`,
+      detail.push(
+        `${joinLabels(outageFetchLabels, locale)} — sin lectura pulse válida del Hub en esta ronda (conectividad, credenciales o tiempo de espera). No implica por sí una caída del servicio; reintente en breve o consulte el panel.`,
       )
     } else if (counts.outage > 0 && outageSignalLabels.length === 0) {
-      parts.push(
-        `Hay ${counts.outage} aplicación(es) marcadas sin servicio; revise el panel para el detalle por origen.`,
+      detail.push(
+        `${counts.outage} aplicación(es) sin servicio según el agregador; revise el panel por origen.`,
       )
     }
 
     if (outageSignalLabels.length > 0) {
-      parts.push(
-        `Según el último informe enviado por el backend, con impacto severo para usuarios: ${joinLabels(outageSignalLabels, locale)}.`,
+      detail.push(
+        `Impacto severo según el último informe del backend: ${joinLabels(outageSignalLabels, locale)}.`,
       )
     }
 
     if (limitedLabels.length > 0) {
-      parts.push(
-        `Con impacto parcial o rendimiento degradado: ${joinLabels(limitedLabels, locale)}.`,
+      detail.push(
+        `Rendimiento degradado o impacto parcial: ${joinLabels(limitedLabels, locale)}.`,
       )
     } else if (counts.limited > 0) {
-      parts.push(
-        `Hay ${counts.limited} aplicación(es) con impacto parcial o rendimiento degradado.`,
+      detail.push(
+        `${counts.limited} aplicación(es) con impacto parcial o rendimiento degradado.`,
       )
     }
 
     if (counts.ok > 0 && hasProblems) {
-      parts.push(
-        "Las demás figuran operativas o en fase de arranque, según los datos recibidos.",
-      )
+      detail.push("El resto aparece operativo o en arranque.")
     }
+
     if (!hasProblems) {
-      parts.push(
-        "Todas las aplicaciones consultadas figuran operativas o en arranque, según los datos recibidos.",
-      )
+      detail.push("Sin incidencias destacadas: todo operativo o en arranque.")
     }
 
+    if (detail.length > 0) {
+      paragraphs.push(detail.join(" "))
+    }
+
+    const foot: string[] = []
     if (roundDurationMs != null) {
-      parts.push(
+      foot.push(
         fromCache
-          ? `Agregación completada en unos ${roundDurationMs} milisegundos. Datos servidos desde caché del Hub: si acaba de recuperarse un servicio, formule la pregunta otra vez en unos segundos para forzar una lectura en vivo.`
-          : `Agregación completada en unos ${roundDurationMs} milisegundos, con lectura en vivo a los backends.`,
+          ? `Ronda ~${roundDurationMs} ms, desde caché del Hub. Para lectura en vivo, vuelva a preguntar en unos segundos.`
+          : `Ronda ~${roundDurationMs} ms, con consulta en vivo a sus backends.`,
       )
     }
-
-    parts.push(
-      "Cada pregunta al asistente genera un informe nuevo; el mensaje en el chat no se actualiza solo.",
+    foot.push(
+      "Cada pregunta genera un informe nuevo; este mensaje no se actualiza solo en el chat.",
     )
+    paragraphs.push(foot.join(" "))
 
-    return parts.join(" ")
+    return paragraphs.join(VOICE_BLOCK_SEP)
   }
 
-  const parts: string[] = []
-  parts.push(
-    `Pulse status for your account: ${totalApps} registered app${totalApps === 1 ? "" : "s"} in this snapshot.`,
+  const paragraphs: string[] = []
+
+  paragraphs.push(
+    `Pulse · ${totalApps} monitored app${totalApps === 1 ? "" : "s"}.`,
   )
 
+  const detail: string[] = []
+
   if (outageFetchLabels.length > 0) {
-    parts.push(
-      `For ${joinLabels(outageFetchLabels, locale)}, this round the Hub could not obtain a valid pulse read (network, credentials, or timeout). That alone does not prove the product is down; retry shortly or check the web dashboard.`,
+    detail.push(
+      `${joinLabels(outageFetchLabels, locale)} — no valid Hub pulse read this round (connectivity, credentials, or timeout). That does not, by itself, mean the product is down; retry shortly or check the dashboard.`,
     )
   } else if (counts.outage > 0 && outageSignalLabels.length === 0) {
-    parts.push(
-      `${counts.outage} app(s) are flagged as unavailable; open the dashboard for per-source detail.`,
+    detail.push(
+      `${counts.outage} app(s) flagged unavailable by the aggregator; open the dashboard for per-source detail.`,
     )
   }
 
   if (outageSignalLabels.length > 0) {
-    parts.push(
-      `According to the latest backend pulse payload, severe user impact for: ${joinLabels(outageSignalLabels)}.`,
+    detail.push(
+      `Severe user impact per the latest backend pulse: ${joinLabels(outageSignalLabels, locale)}.`,
     )
   }
 
   if (limitedLabels.length > 0) {
-    parts.push(`Limited performance or partial impact: ${joinLabels(limitedLabels)}.`)
+    detail.push(
+      `Degraded performance or partial impact: ${joinLabels(limitedLabels, locale)}.`,
+    )
   } else if (counts.limited > 0) {
-    parts.push(
-      `${counts.limited} app(s) show limited performance or partial user impact.`,
+    detail.push(
+      `${counts.limited} app(s) with partial impact or degraded performance.`,
     )
   }
 
   if (counts.ok > 0 && hasProblems) {
-    parts.push("The remaining apps appear operational or warming up from the data we received.")
-  }
-  if (!hasProblems) {
-    parts.push("All checked apps appear operational or warming up.")
+    detail.push("The rest appear operational or warming up.")
   }
 
+  if (!hasProblems) {
+    detail.push("No notable issues: all operational or warming up.")
+  }
+
+  if (detail.length > 0) {
+    paragraphs.push(detail.join(" "))
+  }
+
+  const foot: string[] = []
   if (roundDurationMs != null) {
-    parts.push(
+    foot.push(
       fromCache
-        ? `Aggregation finished in about ${roundDurationMs} milliseconds. Data was served from the Hub cache: if production just recovered, ask again in a few seconds to force a live read.`
-        : `Aggregation finished in about ${roundDurationMs} milliseconds with a live read to your backends.`,
+        ? `Round ~${roundDurationMs} ms, Hub cache. Ask again in a few seconds to force a live read.`
+        : `Round ~${roundDurationMs} ms, live read to your backends.`,
     )
   }
-
-  parts.push(
-    "Each assistant question fetches a new report; the chat message does not update by itself.",
+  foot.push(
+    "Each question generates a new report; this chat message does not update on its own.",
   )
+  paragraphs.push(foot.join(" "))
 
-  return parts.join(" ")
+  return paragraphs.join(VOICE_BLOCK_SEP)
 }
 
 function joinLabels(labels: string[], locale: Locale): string {

@@ -1,9 +1,5 @@
-/**
- * Normaliza texto para lectura TTS (sin markdown ni ruido típico de plantillas).
- */
-export function sanitizeTextForTts(text: string): string {
-  if (!text) return ""
-  return text
+function cleanParagraph(p: string): string {
+  return p
     .replace(/\r\n|\r|\n/g, " ")
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/[#*_`[\]{}|]/g, " ")
@@ -11,6 +7,19 @@ export function sanitizeTextForTts(text: string): string {
     .replace(/_{2,}|\*{2,}/g, " ")
     .replace(/\s+/g, " ")
     .trim()
+}
+
+/**
+ * Normaliza texto para lectura TTS y envío a canales (sin markdown ni ruido típico).
+ * Conserva saltos de párrafo (`\\n\\n`) para una lectura más clara en Telegram / Dialogflow.
+ */
+export function sanitizeTextForTts(text: string): string {
+  if (!text) return ""
+  return text
+    .split(/\n\s*\n/)
+    .map(cleanParagraph)
+    .filter((s) => s.length > 0)
+    .join("\n\n")
 }
 
 /**

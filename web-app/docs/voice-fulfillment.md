@@ -83,7 +83,7 @@ La respuesta del fulfillment también incluye metadatos de contrato (**`pulse_co
 
 ### TTS (sanitización y truncado)
 
-Tras montar el mensaje completo (incluidos tiempos de ronda y nota de caché), el Hub aplica sanitización para TTS y un tope de caracteres configurado por **`VOICE_TTS_MAX_CHARS`** (por defecto **720** en código; **`≤0`** = sin límite). Ver [`deploy-voice-vercel.md`](./deploy-voice-vercel.md).
+Tras montar el mensaje completo (bloques separados por doble salto de línea), el Hub aplica sanitización para TTS y un tope de caracteres configurado por **`VOICE_TTS_MAX_CHARS`** (por defecto **720** en código; **`≤0`** = sin límite). La sanitización **conserva párrafos** (`\n\n`) para que Telegram u otros clientes muestren el informe en varios párrafos. Ver [`deploy-voice-vercel.md`](./deploy-voice-vercel.md).
 
 ---
 

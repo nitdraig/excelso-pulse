@@ -52,9 +52,10 @@ describe("buildVoiceTextFromReport", () => {
     })
     const text = buildVoiceTextFromReport(report)
     expect(text).toContain("Skipy")
-    expect(text).toMatch(/no obtuvo una lectura pulse válida/i)
+    expect(text).toContain("\n\n")
+    expect(text).toMatch(/sin lectura pulse válida del Hub/i)
     expect(text).toMatch(/caché del Hub/i)
-    expect(text).toMatch(/no se actualiza solo/i)
+    expect(text).toMatch(/no se actualiza solo en el chat/i)
   })
 
   it("usa tono distinto para outage según backend sin error del Hub", () => {
@@ -69,7 +70,7 @@ describe("buildVoiceTextFromReport", () => {
     ]
     const report = buildVoiceReportFromEntries(entries, "es", { roundDurationMs: 50 })
     const text = buildVoiceTextFromReport(report)
-    expect(text).toMatch(/último informe enviado por el backend/i)
+    expect(text).toMatch(/último informe del backend/i)
     expect(text).not.toMatch(/no obtuvo una lectura pulse válida/i)
   })
 
