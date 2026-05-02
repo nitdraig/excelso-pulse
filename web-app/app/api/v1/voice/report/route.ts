@@ -114,7 +114,10 @@ export async function POST(request: Request) {
       resolved.userId,
       { voice: true },
     )
-    const report = buildVoiceReportFromEntries(entries, locale)
+    const report = buildVoiceReportFromEntries(entries, locale, {
+      roundDurationMs,
+      fromCache,
+    })
     const rawMessage = buildVoiceTextFromReport(report)
     const { text: message, truncated } = prepareVoiceTtsText(rawMessage, getVoiceTtsMaxChars())
 

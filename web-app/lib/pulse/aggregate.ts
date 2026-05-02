@@ -198,7 +198,8 @@ async function fetchPulseSource(
           logs: [
             {
               timestamp: fetchedAt,
-              event: "HTML or non-JSON response from pulse URL",
+              event:
+                "Pulse URL returned a web page or non-JSON body (wrong path, auth wall, or proxy).",
               type: "error",
             },
           ],

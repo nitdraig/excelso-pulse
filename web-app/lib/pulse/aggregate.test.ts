@@ -50,6 +50,25 @@ describe("aggregatePulseSources", () => {
     expect(entries[0].error).toBeUndefined()
   })
 
+  it("acepta JSON incrustado en HTML (proxy o plantilla con <pre>)", async () => {
+    const inner = JSON.stringify({
+      pulse_version: "1",
+      status: "operational",
+      metrics: { latency_ms: 5, uptime_percent: 100 },
+    })
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => `<html><body><pre>${inner}</pre></body></html>`,
+    }) as unknown as typeof fetch
+
+    const { entries } = await aggregatePulseSources([
+      { appId: "wrap", pulseUrl: "https://wrap.test/pulse", bearerToken: "tok" },
+    ])
+
+    expect(entries[0].status).toBe("operational")
+    expect(entries[0].error).toBeUndefined()
+  })
+
   it("normaliza JSON válido del backend", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,

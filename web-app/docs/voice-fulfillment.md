@@ -72,16 +72,18 @@ Antes del adaptador Dialogflow, el Hub genera un objeto interno estable (**sin P
 - `totalApps`: total de apps incluidas en la ronda.
 - `locale`: `es` o `en`.
 - `counts`: conteo por severidad (`outage`, `limited`, `ok`).
-- `highlights`: lista breve (hasta 5) ordenada por severidad y nombre, con `appId`, `label`, `severity` y `userImpact`.
+- `outageFetchLabels` / `outageSignalLabels` / `limitedLabels`: nombres por categoría (el texto de voz distingue **fallo de lectura del Hub** frente a **outage declarado por el backend**).
+- `highlights`: lista breve (hasta 5) ordenada por severidad y nombre, con `appId`, `label`, `severity`, `userImpact` y `hubFetchFailed` (si el Hub registró error al obtener el pulse).
 - `generatedAt`: timestamp ISO de creación del reporte.
+- `roundDurationMs` y `fromCache`: metadatos de la ronda (también van en el JSON del reporte HTTP).
 
-Luego se genera el texto hablado con reglas deterministas (sin LLM en v1) y recién ahí se adapta al formato `fulfillmentText`/`fulfillmentMessages` de Dialogflow ES.
+Luego se genera el texto hablado con reglas deterministas (sin LLM en v1), incluyendo tiempos de ronda y caché, y se aclara que **cada pregunta obtiene un informe nuevo** (p. ej. Telegram no actualiza el mensaje solo). Después se adapta al formato `fulfillmentText`/`fulfillmentMessages` de Dialogflow ES.
 
 La respuesta del fulfillment también incluye metadatos de contrato (**`pulse_contract`**: `voice-fulfillment-v1`, **`pulse_version`**: `1`) junto al resto del JSON de Dialogflow, para scripts que parseen la respuesta íntegra.
 
 ### TTS (sanitización y truncado)
 
-Tras montar el mensaje (incluido el sufijo de tiempos de ronda/caché en fulfillment), el Hub aplica sanitización para TTS y un tope de caracteres configurado por **`VOICE_TTS_MAX_CHARS`** (por defecto **720** en código; **`≤0`** = sin límite). Ver [`deploy-voice-vercel.md`](./deploy-voice-vercel.md).
+Tras montar el mensaje completo (incluidos tiempos de ronda y nota de caché), el Hub aplica sanitización para TTS y un tope de caracteres configurado por **`VOICE_TTS_MAX_CHARS`** (por defecto **720** en código; **`≤0`** = sin límite). Ver [`deploy-voice-vercel.md`](./deploy-voice-vercel.md).
 
 ---
 

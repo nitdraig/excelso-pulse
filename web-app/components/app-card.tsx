@@ -223,12 +223,14 @@ export function AppCard({ app, onClick }: AppCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>v{app.pulse_version}</span>
-          <span>
-            {new Date(app.last_updated).toLocaleTimeString(localeTag, {
-              hour: "2-digit",
-              minute: "2-digit",
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span className="shrink-0">v{app.pulse_version}</span>
+          <span className="truncate text-right" title={app.pulsePolledAt ?? app.last_updated}>
+            {t("appCard.lastProbe", {
+              time: new Date(app.pulsePolledAt ?? app.last_updated).toLocaleTimeString(
+                localeTag,
+                { hour: "2-digit", minute: "2-digit" },
+              ),
             })}
           </span>
         </div>

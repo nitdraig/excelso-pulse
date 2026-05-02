@@ -11,7 +11,7 @@ import {
 import { mergeRegistryWithPulseEntries } from "@/lib/projects/merge-registry-pulse"
 import { checkRateLimit } from "@/lib/rate-limit"
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 })
@@ -39,8 +39,13 @@ export async function GET() {
     const ownerId = new mongoose.Types.ObjectId(session.user.id)
     const list = await ProjectModel.find({ ownerId }).sort({ updatedAt: -1 }).lean()
 
+    const forceRefresh =
+      new URL(request.url).searchParams.get("refresh") === "1"
+
     const { entries, roundDurationMs, fetchedAt, fromCache } =
-      await loadPulseAggregateForUser(session.user.id)
+      await loadPulseAggregateForUser(session.user.id, {
+        skipAggregateCache: forceRefresh,
+      })
 
     console.info(
       `[pulse] portfolio user=${session.user.id} round=${roundDurationMs}ms entries=${entries.length} cached=${fromCache}`,

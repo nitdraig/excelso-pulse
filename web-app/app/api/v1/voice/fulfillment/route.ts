@@ -105,12 +105,11 @@ export async function POST(request: Request) {
     }
     const { entries, roundDurationMs, fromCache } =
       await loadPulseAggregateForUser(resolved.userId, { voice: true })
-    const report = buildVoiceReportFromEntries(entries, locale)
-    const suffix =
-      locale === "es"
-        ? ` Ronda en ${roundDurationMs} milisegundos${fromCache ? ", desde caché" : ""}.`
-        : ` Round in ${roundDurationMs} milliseconds${fromCache ? ", from cache" : ""}.`
-    const raw = buildVoiceTextFromReport(report) + suffix
+    const report = buildVoiceReportFromEntries(entries, locale, {
+      roundDurationMs,
+      fromCache,
+    })
+    const raw = buildVoiceTextFromReport(report)
     const { text } = prepareVoiceTtsText(raw, getVoiceTtsMaxChars())
     return NextResponse.json(buildDialogflowEsFulfillmentResponse(text), { status: 200 })
   } catch (e) {

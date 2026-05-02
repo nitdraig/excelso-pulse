@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AlertCircle, FolderPlus, Loader2, RefreshCw } from "lucide-react"
 import { useTranslation } from "@/components/i18n-provider"
 import { CommandHeader } from "./command-header"
@@ -14,7 +14,15 @@ import { DeleteProjectDialog } from "./projects/delete-project-dialog"
 import { EditProjectDialog } from "./projects/edit-project-dialog"
 import { Button } from "@/components/ui/button"
 import { buildPortfolioSummary } from "@/lib/i18n/portfolio-summary"
+import { getDashboardAutoRefreshMs } from "@/lib/dashboard-auto-refresh"
 import type { AppPulse } from "@/lib/types"
+
+type LoadOpts = {
+  /** No ocultar la grilla; indicador discreto de refresco. */
+  background?: boolean
+  /** Ignora caché del agregador (`?refresh=1`). */
+  forceRefresh?: boolean
+}
 
 export function CommandDashboard() {
   const { t, locale } = useTranslation()
@@ -24,6 +32,7 @@ export function CommandDashboard() {
     fromCache?: boolean
   }>({})
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null)
   const [detailApp, setDetailApp] = useState<AppPulse | null>(null)
@@ -36,12 +45,25 @@ export function CommandDashboard() {
     name: string
   } | null>(null)
 
-  const loadPortfolio = useCallback(async () => {
-    setFetchError(null)
-    setLoading(true)
+  const everLoadedRef = useRef(false)
+  const loadPortfolioRef = useRef<(opts?: LoadOpts) => Promise<void>>(async () => {})
+
+  const loadPortfolio = useCallback(async (opts?: LoadOpts) => {
+    const bg = Boolean(opts?.background)
+    const force = Boolean(opts?.forceRefresh)
+
+    if (!bg) {
+      setFetchError(null)
+      if (!everLoadedRef.current) setLoading(true)
+    } else {
+      setRefreshing(true)
+    }
+
     try {
+      const path = force ? "/api/portfolio?refresh=1" : "/api/portfolio"
+
       const fetchOnce = async () => {
-        const res = await fetch("/api/portfolio", { cache: "no-store" })
+        const res = await fetch(path, { cache: "no-store" })
         const data = (await res.json()) as {
           apps?: AppPulse[]
           error?: string
@@ -52,8 +74,9 @@ export function CommandDashboard() {
       }
 
       let attempt = 0
+      const maxAttempts = bg ? 1 : 4
 
-      while (attempt < 4) {
+      while (attempt < maxAttempts) {
         const { res, data } = await fetchOnce()
 
         if (res.status === 401) {
@@ -62,9 +85,12 @@ export function CommandDashboard() {
         }
 
         if (!res.ok) {
-          setFetchError(data.error ?? t("dashboard.loadError"))
-          setApps([])
-          setPulseMeta({})
+          if (!bg) {
+            setFetchError(data.error ?? t("dashboard.loadError"))
+            setApps([])
+            setPulseMeta({})
+            everLoadedRef.current = false
+          }
           return
         }
 
@@ -74,30 +100,54 @@ export function CommandDashboard() {
           roundDurationMs: data.roundDurationMs,
           fromCache: data.fromCache,
         })
+        setFetchError(null)
+        everLoadedRef.current = true
+
+        if (bg) break
 
         const needsWarmupRetry =
           attempt < 3 &&
           nextApps.some((a) => a.readiness === "starting" && a.user_impact === "none")
-        if (!needsWarmupRetry) {
-          break
-        }
+        if (!needsWarmupRetry) break
 
         const delayMs = attempt === 0 ? 1600 : attempt === 1 ? 2200 : 2600
         await new Promise((r) => setTimeout(r, delayMs))
         attempt += 1
       }
     } catch {
-      setFetchError(t("dashboard.networkError"))
-      setApps([])
-      setPulseMeta({})
+      if (!bg) {
+        setFetchError(t("dashboard.networkError"))
+        setApps([])
+        setPulseMeta({})
+        everLoadedRef.current = false
+      }
     } finally {
       setLoading(false)
+      if (bg) setRefreshing(false)
     }
   }, [t])
+
+  loadPortfolioRef.current = loadPortfolio
 
   useEffect(() => {
     void loadPortfolio()
   }, [loadPortfolio])
+
+  useEffect(() => {
+    const ms = getDashboardAutoRefreshMs()
+    if (ms <= 0) return undefined
+    const id = window.setInterval(() => {
+      void loadPortfolioRef.current({ background: true })
+    }, ms)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const detailAppId = detailApp?.id
+  useEffect(() => {
+    if (!isSheetOpen || !detailAppId) return
+    const next = apps.find((a) => a.id === detailAppId)
+    if (next) setDetailApp(next)
+  }, [apps, isSheetOpen, detailAppId])
 
   const summary = useMemo(
     () => buildPortfolioSummary(locale, apps, pulseMeta),
@@ -122,7 +172,7 @@ export function CommandDashboard() {
     setSelectedAppId(null)
     setDetailApp(null)
     setIsSheetOpen(false)
-    void loadPortfolio()
+    void loadPortfolio({ forceRefresh: true })
   }, [loadPortfolio])
 
   const selectedName = apps.find((a) => a.id === selectedAppId)?.name ?? t("dashboard.projectFallback")
@@ -171,16 +221,29 @@ export function CommandDashboard() {
                     {apps.filter((a) => a.user_impact === "outage").length} {t("dashboard.countOutage")}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className="flex flex-wrap items-center gap-2"
+                  title={t("dashboard.autoRefreshHint")}
+                >
+                  {refreshing ? (
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" aria-hidden />
+                      <span>{t("dashboard.refreshingNow")}</span>
+                    </span>
+                  ) : null}
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    onClick={() => void loadPortfolio()}
-                    disabled={loading}
+                    onClick={() =>
+                      void loadPortfolio({ background: true, forceRefresh: true })
+                    }
+                    disabled={loading || refreshing}
                   >
-                    <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                    <RefreshCw
+                      className={`h-4 w-4 shrink-0 ${loading || refreshing ? "animate-spin" : ""}`}
+                    />
                     <span className="hidden sm:inline">{t("dashboard.refresh")}</span>
                   </Button>
                   <Button
@@ -219,7 +282,12 @@ export function CommandDashboard() {
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   {fetchError}
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => void loadPortfolio()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void loadPortfolio({ forceRefresh: true })}
+                >
                   {t("dashboard.retry")}
                 </Button>
               </div>

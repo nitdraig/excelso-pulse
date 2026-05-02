@@ -13,11 +13,14 @@ import {
 import { parsePulseSourcesEnv } from "@/lib/pulse/env-sources"
 import { resolveBearerFromEnv } from "@/lib/pulse/resolve-secret"
 import { getBearerForProject } from "@/lib/projects/resolve-bearer"
+import { applyPresentationStability } from "@/lib/pulse/presentation-stability"
 import type { PulseSource, PulseSummaryEntry } from "@/lib/pulse/types"
 
 export type LoadPulseForUserOptions = {
   /** Ronda más corta, caché dedicada y concurrencia por defecto acotada (voz / webhooks). */
   voice?: boolean
+  /** Si true, ignora la fila de caché del agregado y vuelve a llamar a los backends. */
+  skipAggregateCache?: boolean
 }
 
 export async function loadPulseAggregateForUser(
@@ -30,9 +33,10 @@ export async function loadPulseAggregateForUser(
   fromCache: boolean
 }> {
   const voice = Boolean(opts?.voice)
+  const skipCache = Boolean(opts?.skipAggregateCache)
   const cacheKey = voice ? `voice:user:${userId}` : `user:${userId}`
   const voiceTtl = getVoicePulseCacheTtlMs()
-  const cached = getCachedAggregate(cacheKey)
+  const cached = !skipCache ? getCachedAggregate(cacheKey) : null
   if (cached) {
     return {
       entries: cached.entries,
@@ -73,7 +77,7 @@ export async function loadPulseAggregateForUser(
   }
 
   const maxConc = getPulseMaxConcurrency()
-  const { entries, roundDurationMs } = await aggregatePulseSources(
+  const { entries: rawEntries, roundDurationMs } = await aggregatePulseSources(
     sources,
     voice
       ? {
@@ -83,6 +87,7 @@ export async function loadPulseAggregateForUser(
         }
       : undefined,
   )
+  const entries = applyPresentationStability(rawEntries, cacheKey)
   const fetchedAt = new Date().toISOString()
 
   setCachedAggregate(

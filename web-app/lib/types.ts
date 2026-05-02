@@ -63,6 +63,8 @@ export interface AppPulse {
   ai_context: string
   logs: PulseLog[]
   last_updated: string
+  /** Momento ISO de la última petición del Hub al pulse de este origen (ronda agregada). */
+  pulsePolledAt?: string
   /** Si existe, el panel muestra mensaje localizado en lugar del texto crudo del agregador. */
   pulseFetchError?: { code: PulseFetchErrorCode; message: string }
 }

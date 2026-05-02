@@ -52,6 +52,11 @@ const sectionTitle = "text-xs font-semibold uppercase tracking-wider text-muted-
 const sheetActionClass =
   "w-full justify-start gap-2 border-border/80 bg-card/40 hover:bg-muted/60 focus-visible:ring-1 focus-visible:ring-border focus-visible:ring-offset-0"
 
+type AnalysisBlock =
+  | { kind: "empty" }
+  | { kind: "brief"; tag: string }
+  | { kind: "full"; body: string }
+
 function looksLikeShortSlug(text: string): boolean {
   const t = text.trim()
   return t.length > 0 && t.length <= 48 && /^[\w.-]+$/.test(t)
@@ -67,21 +72,14 @@ export function AppDetailSheet({
   const { t, locale } = useTranslation()
   const localeTag = locale === "es" ? "es-ES" : "en-US"
 
-  const analysisBlock = useMemo(() => {
-    if (!app) return { body: "", isBrief: false }
+  const analysisBlock = useMemo((): AnalysisBlock => {
+    if (!app) return { kind: "empty" }
     const raw = pulseUserFacingContext(app, t)
     const brief =
       !app.pulseFetchError && raw.trim().length > 0 && looksLikeShortSlug(raw)
-    if (brief) {
-      return {
-        body: t("sheet.aiContextBrief", { tag: raw.trim() }),
-        isBrief: true,
-      }
-    }
-    if (!raw.trim()) {
-      return { body: t("sheet.aiContextEmpty"), isBrief: false }
-    }
-    return { body: raw, isBrief: false }
+    if (brief) return { kind: "brief", tag: raw.trim() }
+    if (!raw.trim()) return { kind: "empty" }
+    return { kind: "full", body: raw }
   }, [app, t])
 
   if (!app) return null
@@ -142,10 +140,26 @@ export function AppDetailSheet({
               <div
                 className={cn(
                   "rounded-xl border border-border/80 bg-muted/25 px-4 py-3.5 text-sm leading-relaxed text-foreground shadow-sm",
-                  analysisBlock.isBrief && "border-dashed border-amber-500/25 bg-amber-500/5",
+                  analysisBlock.kind === "brief" &&
+                    "border-dashed border-amber-500/25 bg-amber-500/5",
                 )}
               >
-                <p className="whitespace-pre-wrap wrap-break-word">{analysisBlock.body}</p>
+                {analysisBlock.kind === "brief" ? (
+                  <>
+                    <p className="font-mono text-sm tracking-tight text-foreground sm:text-base">
+                      {analysisBlock.tag}
+                    </p>
+                    <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground">
+                      {t("sheet.aiContextBriefHint")}
+                    </p>
+                  </>
+                ) : analysisBlock.kind === "empty" ? (
+                  <p className="whitespace-pre-wrap wrap-break-word text-muted-foreground">
+                    {t("sheet.aiContextEmpty")}
+                  </p>
+                ) : (
+                  <p className="whitespace-pre-wrap wrap-break-word">{analysisBlock.body}</p>
+                )}
               </div>
             </section>
 

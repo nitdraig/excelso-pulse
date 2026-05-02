@@ -55,7 +55,7 @@
    | `AUTH_SECRET`              | Auth.js secret (`npx auth secret`).                                                                       |
    | `PULSE_SECRETS_MASTER_KEY` | 64 hex chars (32 bytes); required to save Bearer tokens in the database. Example: `openssl rand -hex 32`. |
 
-   Optional aggregator tuning: `PULSE_FETCH_TIMEOUT_MS`, `PULSE_ROUND_TIMEOUT_MS`, `PULSE_CACHE_TTL_MS`, `PULSE_RATE_LIMIT_*`, `PULSE_SOURCES`, `PULSE_MERGE_ENV_SOURCES`. See [`web-app/docs/pulse-aggregator.md`](web-app/docs/pulse-aggregator.md).
+   Optional aggregator tuning: `PULSE_FETCH_TIMEOUT_MS`, `PULSE_ROUND_TIMEOUT_MS`, `PULSE_CACHE_TTL_MS`, `PULSE_RATE_LIMIT_*`, `PULSE_SOURCES`, `PULSE_MERGE_ENV_SOURCES`. See [`web-app/docs/pulse-aggregator.md`](web-app/docs/pulse-aggregator.md). Dashboard auto-refresh (client): `NEXT_PUBLIC_DASHBOARD_AUTO_REFRESH_MS` (default `30000`; `0` disables background polls). Manual **Refresh** calls `/api/portfolio?refresh=1` to bypass the aggregator cache once.
 
 3. **Run locally**
 

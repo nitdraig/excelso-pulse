@@ -165,6 +165,7 @@ export function mergeRegistryWithPulseEntries(
             ]
           })(),
       last_updated: live.last_updated,
+      pulsePolledAt: live.fetchedAt,
     };
     return withAppUrl(doc, pulse);
   });

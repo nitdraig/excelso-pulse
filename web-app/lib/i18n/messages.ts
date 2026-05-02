@@ -59,6 +59,9 @@ export const enMessages = {
     countLimited: "limited",
     countOutage: "down",
     refresh: "Refresh",
+    refreshingNow: "Updating…",
+    autoRefreshHint:
+      "The list refreshes in the background on a timer; use Refresh to pull the latest from your backends now.",
     retry: "Retry",
     loadingPortfolio: "Aggregating pulse…",
     emptyState:
@@ -80,12 +83,14 @@ export const enMessages = {
       "The Hub has no Bearer token for this source. Set the secret env key on the server or save a token in the project.",
     timeout: "The pulse request timed out. Check that the backend URL is reachable from Pulse.",
     aborted: "The pulse request was cancelled (round timeout or navigation).",
-    http_error: "The pulse endpoint returned an HTTP error.",
-    http_error_detail: "The pulse endpoint returned HTTP {status}.",
+    http_error:
+      "The saved pulse URL returned an HTTP error. Pulse Hub only calls that URL; check the path, Bearer token, and that server’s logs.",
+    http_error_detail:
+      "Your backend answered HTTP {status} at the pulse URL you saved. That status is from your app or its proxy, not from Pulse Hub — inspect that service (for 500, see server logs and the route that should return pulse JSON).",
     invalid_json:
-      "The pulse URL did not return valid JSON (wrong path, truncated body, or an HTML error page). Ensure GET /internal/pulse returns JSON.",
+      "The pulse URL did not return parseable JSON. Check the path, that the server returns a JSON body, and that nothing strips or wraps the response.",
     html_response:
-      "The response looks like HTML instead of JSON — often a 404 page, login wall, or wrong reverse-proxy path.",
+      "The URL returned a web page instead of pulse JSON (common: login redirect, 404 HTML, or a reverse-proxy routing to the wrong service). Verify the pulse path and Bearer token.",
     empty_body: "The pulse endpoint returned an empty body.",
     network: "Could not reach the pulse endpoint (network or DNS error).",
     pulse_schema_mismatch:
@@ -129,6 +134,7 @@ export const enMessages = {
       disconnected: "disconnected",
       unknown: "unknown",
     },
+    lastProbe: "Checked {time}",
   },
   sheet: {
     technicalPulse: "technical",
@@ -147,8 +153,8 @@ export const enMessages = {
     viewFullLogs: "View full logs",
     aiContextEmpty:
       "No narrative summary was returned for this source. Use metrics and activity below to assess health.",
-    aiContextBrief:
-      "Backend sent a short label only ({tag}). Configure `ai_context` in your pulse payload for a richer summary.",
+    aiContextBriefHint:
+      "No detailed description was provided. Use the metrics and activity below to see how this source is doing.",
   },
   projects: {
     newSource: "New source",
@@ -488,6 +494,9 @@ export const esMessages = {
     countLimited: "limitado",
     countOutage: "caída",
     refresh: "Actualizar",
+    refreshingNow: "Actualizando…",
+    autoRefreshHint:
+      "La lista se actualiza sola en segundo plano; pulsa Actualizar para volver a consultar ya tus backends.",
     retry: "Reintentar",
     loadingPortfolio: "Agregando pulse…",
     emptyState:
@@ -510,12 +519,14 @@ export const esMessages = {
     timeout:
       "La petición al pulse expiró por tiempo. Comprueba que la URL del backend sea alcanzable desde Pulse.",
     aborted: "La petición al pulse se canceló (timeout de ronda o navegación).",
-    http_error: "El endpoint pulse respondió con error HTTP.",
-    http_error_detail: "El endpoint pulse respondió HTTP {status}.",
+    http_error:
+      "La URL pulse guardada devolvió un error HTTP. El Hub solo llama a esa URL; revisa la ruta, el token Bearer y los logs de ese servidor.",
+    http_error_detail:
+      "Tu backend respondió HTTP {status} en la URL pulse que configuraste. Ese código lo genera tu app o el proxy, no el Hub Pulse — revisa ese servicio (con 500, mira logs y la ruta que debe devolver el JSON pulse).",
     invalid_json:
-      "La URL pulse no devolvió JSON válido (ruta incorrecta, cuerpo truncado o página HTML de error). Asegúrate de que GET /internal/pulse devuelva JSON.",
+      "La URL pulse no devolvió JSON que se pueda interpretar. Revisa la ruta, que el servidor devuelva cuerpo JSON y que ningún proxy lo modifique o envuelva.",
     html_response:
-      "La respuesta parece HTML en lugar de JSON (suele ser 404, login o path incorrecto detrás del proxy).",
+      "La URL devolvió una página web en lugar del JSON pulse (habitual: redirección al login, 404 en HTML o proxy que enruta mal). Comprueba la ruta del pulse y el token Bearer.",
     empty_body: "El endpoint pulse devolvió cuerpo vacío.",
     network: "No se pudo alcanzar el endpoint pulse (red o DNS).",
     pulse_schema_mismatch:
@@ -559,6 +570,7 @@ export const esMessages = {
       disconnected: "desconectado",
       unknown: "desconocido",
     },
+    lastProbe: "Comprobado {time}",
   },
   sheet: {
     technicalPulse: "técnico",
@@ -578,8 +590,8 @@ export const esMessages = {
     viewFullLogs: "Ver logs completos",
     aiContextEmpty:
       "No hay resumen narrativo para este origen. Usa métricas y actividad abajo para valorar el estado.",
-    aiContextBrief:
-      "El backend solo envió una etiqueta corta ({tag}). Define `ai_context` en el JSON pulse para un resumen más útil.",
+    aiContextBriefHint:
+      "No se incluyó una descripción detallada. Usa las métricas y la actividad de abajo para ver cómo va este origen.",
   },
   projects: {
     newSource: "Nuevo origen",
