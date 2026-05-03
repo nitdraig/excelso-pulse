@@ -12,7 +12,7 @@ import {
   buildVoiceTextFromReport,
 } from "@/lib/voice/build-voice-summary"
 import { hashVoiceToken } from "@/lib/voice/voice-user-token"
-import { tg, telegramUiLang } from "@/lib/telegram/copy"
+import { tg, telegramUiLang, type TelegramUiLang } from "@/lib/telegram/copy"
 import { telegramSendMessage } from "@/lib/telegram/send-message"
 
 export type ParsedTelegramMessage = {
@@ -25,7 +25,11 @@ export type ParsedTelegramMessage = {
 export function extractTelegramMessage(update: unknown): ParsedTelegramMessage | null {
   if (!update || typeof update !== "object") return null
   const u = update as Record<string, unknown>
-  const raw = u.message ?? u.edited_message
+  const raw =
+    u.message ??
+    u.edited_message ??
+    u.business_message ??
+    u.edited_business_message
   if (!raw || typeof raw !== "object") return null
   const msg = raw as Record<string, unknown>
   const chat = msg.chat as { id?: number } | undefined
@@ -49,6 +53,14 @@ export function extractTelegramMessage(update: unknown): ParsedTelegramMessage |
   }
 }
 
+/** `state` → informe en inglés; `estado` → en español (con o sin `/`). */
+export function reportCommandLang(text: string): TelegramUiLang | null {
+  const t = text.trim()
+  if (/^\/?state$/i.test(t)) return "en"
+  if (/^\/?estado$/i.test(t)) return "es"
+  return null
+}
+
 async function reply(
   lang: ReturnType<typeof telegramUiLang>,
   chatId: number,
@@ -56,7 +68,13 @@ async function reply(
 ): Promise<void> {
   const maxChars = Math.min(4000, getVoiceTtsMaxChars() > 0 ? getVoiceTtsMaxChars() : 4000)
   const { text: out } = prepareVoiceTtsText(text, maxChars)
-  await telegramSendMessage(chatId, out)
+  const sent = await telegramSendMessage(chatId, out)
+  if (!sent.ok) {
+    console.error("[telegram] reply sendMessage failed", {
+      chatId,
+      description: sent.description,
+    })
+  }
 }
 
 async function redeemLinkCode(
@@ -142,14 +160,14 @@ async function unlinkTelegram(
 async function sendPortfolioSummary(
   telegramUserId: number,
   chatId: number,
-  lang: ReturnType<typeof telegramUiLang>,
+  reportLang: TelegramUiLang,
 ): Promise<void> {
   await connectDB()
   const row = await TelegramIntegrationModel.findOne({
     telegramUserId: String(telegramUserId),
   }).lean()
   if (!row?.ownerId) {
-    await reply(lang, chatId, tg(lang, "portfolioNotLinked"))
+    await reply(reportLang, chatId, tg(reportLang, "portfolioNotLinked"))
     return
   }
 
@@ -158,15 +176,15 @@ async function sendPortfolioSummary(
   try {
     const { entries, roundDurationMs, fromCache } =
       await loadPulseAggregateForUser(userId)
-    const report = buildVoiceReportFromEntries(entries, lang, {
+    const report = buildVoiceReportFromEntries(entries, reportLang, {
       roundDurationMs,
       fromCache,
     })
     const body = buildVoiceTextFromReport(report)
-    await reply(lang, chatId, body)
+    await reply(reportLang, chatId, body)
   } catch (e) {
     console.error("[telegram] portfolio", e)
-    await reply(lang, chatId, tg(lang, "portfolioError"))
+    await reply(reportLang, chatId, tg(reportLang, "portfolioError"))
   }
 }
 
@@ -196,5 +214,11 @@ export async function processTelegramUpdate(update: unknown): Promise<void> {
     return
   }
 
-  await sendPortfolioSummary(telegramUserId, chatId, lang)
+  const reportLang = reportCommandLang(text)
+  if (reportLang) {
+    await sendPortfolioSummary(telegramUserId, chatId, reportLang)
+    return
+  }
+
+  await reply(lang, chatId, tg(lang, "wrongCommand"))
 }

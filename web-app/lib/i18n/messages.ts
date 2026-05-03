@@ -404,7 +404,7 @@ export const enMessages = {
     voiceLastUsedSub: "When Pulse last responded to voice (webhook or JSON report).",
     sectionTelegram: "Telegram bot",
     telegramIntro:
-      "One bot for all accounts: generate a link, open it in Telegram, and press Start (Telegram sends a hidden token with /start). Then refresh status here or revisit this tab. Any message in the bot returns your portfolio; /unlink revokes the link.",
+      "One bot for all accounts: generate a link, open it in Telegram, and press Start (Telegram sends a hidden token with /start). Then refresh status here or revisit this tab. In the bot, send «state» for the English report or «estado» for Spanish; /unlink revokes the link.",
     telegramLinked: "Telegram linked (ID ends with {hint}).",
     telegramNotLinked: "Telegram not linked.",
     telegramBotMissing:
@@ -858,7 +858,7 @@ export const esMessages = {
     voiceLastUsedSub: "Momento en que Pulse respondió por última vez a voz o al reporte JSON.",
     sectionTelegram: "Bot de Telegram",
     telegramIntro:
-      "Un solo bot para todas las cuentas: genera un enlace, ábrelo en Telegram y pulsa Iniciar (Telegram envía un código oculto con /start). Luego actualiza el estado aquí o vuelve a esta pestaña. Cualquier mensaje en el bot devuelve tu portfolio; /desvincular revoca el enlace.",
+      "Un solo bot para todas las cuentas: genera un enlace, ábrelo en Telegram y pulsa Iniciar (Telegram envía un código oculto con /start). Luego actualiza el estado aquí o vuelve a esta pestaña. En el bot, escribe «estado» para el informe en español o «state» en inglés; /desvincular revoca el enlace.",
     telegramLinked: "Telegram vinculado (el ID termina en {hint}).",
     telegramNotLinked: "Telegram sin vincular.",
     telegramBotMissing:

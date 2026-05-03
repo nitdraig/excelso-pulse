@@ -74,10 +74,28 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
+    console.warn("[telegram] webhook POST body JSON inválido o vacío")
     return NextResponse.json({ ok: true })
   }
 
+  const updateId =
+    body && typeof body === "object" && "update_id" in body
+      ? (body as { update_id?: number }).update_id
+      : undefined
+
   const msg = extractTelegramMessage(body)
+  if (!msg) {
+    console.info("[telegram] webhook sin mensaje de texto usable", {
+      update_id: updateId,
+      update_keys: body && typeof body === "object" ? Object.keys(body as object) : [],
+    })
+  } else {
+    console.info("[telegram] webhook mensaje", {
+      update_id: updateId,
+      chatId: msg.chatId,
+      preview: msg.text.slice(0, 40),
+    })
+  }
   const rateKey = msg
     ? `telegram_user:${msg.telegramUserId}`
     : `telegram_ip:${request.headers.get("x-forwarded-for") ?? "na"}`

@@ -40,7 +40,9 @@ El informe de texto reutiliza las mismas reglas que la voz (`buildVoiceTextFromR
 |---------|--------|
 | Abrir `t.me/<bot>?start=<token>` y **Iniciar** | Vincula esa cuenta de Telegram con tu usuario Pulse (una vez por enlace). |
 | `/start` sin haber abierto el enlace | Si ya estás vinculado, te lo indica; si no, pide generar el enlace en la web. |
-| Cualquier otro texto (p. ej. `hola`, `estado`, `/estado`) | Resumen de portfolio (misma lógica que voz). |
+| `state` o `/state` (solo eso, mayúsculas indistinto) | Resumen de portfolio **en inglés**. |
+| `estado` o `/estado` (solo eso) | Resumen de portfolio **en español**. |
+| Cualquier otro texto | Aviso de que no es el comando correcto (texto según el idioma de Telegram). |
 | `/desvincular` o `/unlink` | Quita el vínculo para ese usuario de Telegram. |
 
 ## Si el bot no responde (silencio total)
@@ -60,9 +62,23 @@ Las marcas ✓✓ en Telegram solo confirman que **Telegram** recibió tu mensaj
    - `url` debe ser exactamente `https://<tu-dominio>/api/v1/telegram/webhook` (HTTPS público; **no** sirve `http://localhost` sin túnel).
    - Si `last_error_message` no está vacío, ahí suele estar la causa (403, timeout, certificado, etc.).
    - Si `pending_update_count` crece, Telegram no puede entregar bien al servidor.
+   - **`allowed_updates`:** si existe y **no** incluye `"message"`, Telegram **no enviará** mensajes de chat a tu webhook (el bot quedará mudo). Debe ser `null` o contener `"message"` (o no acotes tipos al registrar el webhook).
 
-3. **Mismo secreto en dos sitios:** el `secret_token` de `setWebhook` debe ser **idéntico** a `TELEGRAM_WEBHOOK_SECRET` en el entorno donde corre la app (p. ej. Vercel). Si en Telegram hay `secret_token` pero en el servidor la variable no existe, este proyecto respondía antes con error y no procesaba el update.
+3. **El GET de diagnóstico** (`/api/v1/telegram/webhook` en el navegador) solo confirma que en **Vercel** existen las variables `TELEGRAM_BOT_TOKEN` y `TELEGRAM_WEBHOOK_SECRET`. **No** demuestra que el `secret_token` de `setWebhook` sea el mismo valor: si difieren, Telegram recibe **403** y no procesas nada.
 
-4. **Desarrollo local:** usa un túnel (ngrok, Cloudflare Tunnel, etc.) con HTTPS, apunta `setWebhook` a esa URL y define las variables en `.env` del `web-app`.
+4. **Probar el POST como Telegram** (mismo `TELEGRAM_WEBHOOK_SECRET` que en Vercel y en `setWebhook`; sustituye `TU_ID` por tu id numérico de usuario, p. ej. [@userinfobot](https://t.me/userinfobot)):
 
-5. Tras corregir `setWebhook`, puedes forzar reintento con `deleteWebhook` + `setWebhook` de nuevo si hace falta.
+   ```bash
+   curl -sS -X POST "https://<tu-dominio>/api/v1/telegram/webhook" \
+     -H "Content-Type: application/json" \
+     -H "X-Telegram-Bot-Api-Secret-Token: <TELEGRAM_WEBHOOK_SECRET>" \
+     -d "{\"update_id\":999001,\"message\":{\"message_id\":1,\"from\":{\"id\":TU_ID,\"language_code\":\"es\"},\"chat\":{\"id\":TU_ID,\"type\":\"private\"},\"date\":1730000000,\"text\":\"/start\"}}"
+   ```
+
+   Luego revisa **Vercel → Logs** de esa función: deberías ver líneas `[telegram] webhook mensaje` y, si `sendMessage` falla, `[telegram] reply sendMessage failed`. Si con el mismo secreto obtienes **403**, el secreto del `curl` no coincide con el del servidor.
+
+5. **Mismo secreto en dos sitios:** el `secret_token` de `setWebhook` debe ser **idéntico** a `TELEGRAM_WEBHOOK_SECRET` en el entorno donde corre la app (p. ej. Vercel). El GET del navegador solo indica que la variable existe, no que coincida con Telegram.
+
+6. **Desarrollo local:** usa un túnel (ngrok, Cloudflare Tunnel, etc.) con HTTPS, apunta `setWebhook` a esa URL y define las variables en `.env` del `web-app`.
+
+7. Tras corregir `setWebhook`, puedes forzar reintento con `deleteWebhook` + `setWebhook` de nuevo si hace falta.
