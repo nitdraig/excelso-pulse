@@ -127,7 +127,9 @@ export function CommandDashboard() {
     }
   }, [t])
 
-  loadPortfolioRef.current = loadPortfolio
+  useEffect(() => {
+    loadPortfolioRef.current = loadPortfolio
+  }, [loadPortfolio])
 
   useEffect(() => {
     void loadPortfolio()

@@ -4,6 +4,11 @@ export function createVoiceUserToken(): string {
   return crypto.randomBytes(32).toString("hex")
 }
 
+/** Payload para `t.me/bot?start=…`. Debe quedar claramente por debajo del límite de 64 caracteres de Telegram. */
+export function createTelegramStartPayload(): string {
+  return crypto.randomBytes(18).toString("hex")
+}
+
 export function hashVoiceToken(rawToken: string): string {
   return crypto.createHash("sha256").update(rawToken, "utf8").digest("hex")
 }

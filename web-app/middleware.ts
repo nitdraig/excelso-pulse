@@ -24,8 +24,10 @@ export default auth((req) => {
     pathname === "/manifest.json"
   /** Webhook Dialogflow / voz: auth propia (secreto de instancia), no sesión de navegador. */
   const isPublicVoiceApi = pathname.startsWith("/api/v1/voice/")
+  /** Webhook Telegram: validación por `X-Telegram-Bot-Api-Secret-Token`. */
+  const isPublicTelegramWebhook = pathname === "/api/v1/telegram/webhook"
 
-  if (isPublicAsset || isPublicVoiceApi) return NextResponse.next()
+  if (isPublicAsset || isPublicVoiceApi || isPublicTelegramWebhook) return NextResponse.next()
 
   if (req.auth && isGuestLanding) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin))

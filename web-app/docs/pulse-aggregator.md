@@ -17,6 +17,8 @@ Esta app actúa como **cliente** de cada backend: llama `GET {pulseUrl}` con `Au
 | `GET /api/pulse/summary` | Sesión: JSON agregado crudo (`entries[]`) para UI secundaria, otro BFF o jobs. |
 | `POST /api/v1/voice/fulfillment` | Webhook **Dialogflow ES** (sin sesión web): token por usuario (recomendado) o fallback legacy por `VOICE_WEBHOOK_SECRET`. Ver [`voice-fulfillment.md`](./voice-fulfillment.md). |
 | `GET/POST/DELETE /api/account/voice-token` | Sesión: consultar estado, crear/rotar o revocar token de voz del usuario actual. |
+| `POST /api/v1/telegram/webhook` | Webhook **Telegram**: cabecera `X-Telegram-Bot-Api-Secret-Token` = `TELEGRAM_WEBHOOK_SECRET`. Multi-tenant por vínculo `telegram_user_id ↔ usuario`. Ver [`telegram-bot.md`](./telegram-bot.md). |
+| `GET/POST/DELETE /api/account/telegram-link` | Sesión: estado del vínculo, generar enlace `t.me/...?start=…` o desvincular. |
 | `GET /api/projects` | Registro en Mongo sin llamar a backends (placeholders sin live). |
 | `GET /api/projects/{slug}` | Detalle para edición: `pulseUrl`, `hasBearer`, etc. **No** devuelve el token ni el cifrado. |
 | `PATCH /api/projects/{slug}` | Actualiza campos del origen; invalida caché del agregador. |

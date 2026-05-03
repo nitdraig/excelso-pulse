@@ -3,7 +3,14 @@ import mongoose from "mongoose"
 import bcrypt from "bcryptjs"
 import { auth } from "@/auth"
 import { connectDB } from "@/lib/db/connect"
-import { ProjectAlertModel, ProjectModel, UserModel } from "@/lib/db/models"
+import {
+  ProjectAlertModel,
+  ProjectModel,
+  TelegramIntegrationModel,
+  TelegramLinkCodeModel,
+  UserModel,
+  VoiceIntegrationModel,
+} from "@/lib/db/models"
 import {
   deleteAccountBodySchema,
   patchAccountBodySchema,
@@ -183,6 +190,9 @@ export async function DELETE(req: Request) {
     const ownerId = new mongoose.Types.ObjectId(session.user.id)
     await ProjectModel.deleteMany({ ownerId })
     await ProjectAlertModel.deleteMany({ ownerId })
+    await VoiceIntegrationModel.deleteMany({ ownerId })
+    await TelegramIntegrationModel.deleteMany({ ownerId })
+    await TelegramLinkCodeModel.deleteMany({ ownerId })
     await UserModel.deleteOne({ _id: user._id })
 
     return NextResponse.json({ ok: true })

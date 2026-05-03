@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { signOut, useSession } from "next-auth/react"
-import { Copy, House, KeyRound, Loader2, LogOut, RefreshCw, Terminal, Trash2 } from "lucide-react"
+import {
+  Copy,
+  House,
+  KeyRound,
+  Loader2,
+  LogOut,
+  MessageCircle,
+  RefreshCw,
+  Terminal,
+  Trash2,
+} from "lucide-react"
 import { AppSubHeader } from "@/components/app-sub-header"
 import { MobileTabBar } from "@/components/mobile-tab-bar"
 import { useTranslation } from "@/components/i18n-provider"
@@ -33,6 +43,12 @@ type VoiceTokenStatusDto = {
   label: string
   lastUsedAt: string | null
   updatedAt: string | null
+}
+
+type TelegramLinkStatusDto = {
+  linked: boolean
+  telegramHint: string | null
+  botConfigured: boolean
 }
 
 export function AccountPage() {
@@ -74,6 +90,14 @@ export function AccountPage() {
 
   const [voiceDeleteOpen, setVoiceDeleteOpen] = useState(false)
   const [voiceDeleting, setVoiceDeleting] = useState(false)
+
+  const [tgLoading, setTgLoading] = useState(true)
+  const [tgStatus, setTgStatus] = useState<TelegramLinkStatusDto | null>(null)
+  const [tgError, setTgError] = useState<string | null>(null)
+  const [tgMessage, setTgMessage] = useState<string | null>(null)
+  const [tgDeepLink, setTgDeepLink] = useState("")
+  const [tgGenerating, setTgGenerating] = useState(false)
+  const [tgUnlinking, setTgUnlinking] = useState(false)
 
   const loadProfile = useCallback(async () => {
     setLoadError(null)
@@ -137,6 +161,51 @@ export function AccountPage() {
   useEffect(() => {
     void loadVoiceStatus()
   }, [loadVoiceStatus])
+
+  const loadTelegramStatus = useCallback(async () => {
+    setTgError(null)
+    setTgLoading(true)
+    try {
+      const res = await fetch("/api/account/telegram-link", { cache: "no-store" })
+      const data = (await res.json()) as TelegramLinkStatusDto & { error?: string }
+      if (!res.ok) {
+        setTgError(data.error ?? t("accountPage.telegramLoadError"))
+        setTgStatus(null)
+        return
+      }
+      setTgStatus({
+        linked: data.linked,
+        telegramHint: data.telegramHint ?? null,
+        botConfigured: data.botConfigured,
+      })
+    } catch {
+      setTgError(t("accountPage.networkError"))
+      setTgStatus(null)
+    } finally {
+      setTgLoading(false)
+    }
+  }, [t])
+
+  useEffect(() => {
+    void loadTelegramStatus()
+  }, [loadTelegramStatus])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void loadTelegramStatus()
+      }
+    }
+    const onFocus = () => {
+      void loadTelegramStatus()
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    window.addEventListener("focus", onFocus)
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible)
+      window.removeEventListener("focus", onFocus)
+    }
+  }, [loadTelegramStatus])
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()
@@ -376,6 +445,72 @@ export function AccountPage() {
       setVoiceError(t("accountPage.networkError"))
     } finally {
       setVoiceDeleting(false)
+    }
+  }
+
+  async function generateTelegramLink() {
+    setTgMessage(null)
+    setTgError(null)
+    setTgGenerating(true)
+    try {
+      const res = await fetch("/api/account/telegram-link", { method: "POST" })
+      const data = (await res.json()) as {
+        ok?: boolean
+        deepLink?: string
+        error?: string
+        message?: string
+      }
+      if (!res.ok || !data.deepLink) {
+        setTgError(data.message ?? data.error ?? t("accountPage.telegramGenerateError"))
+        return
+      }
+      setTgDeepLink(data.deepLink)
+      setTgMessage(t("accountPage.telegramLinkReady"))
+      await loadTelegramStatus()
+    } catch {
+      setTgError(t("accountPage.networkError"))
+    } finally {
+      setTgGenerating(false)
+    }
+  }
+
+  async function copyTelegramDeepLink() {
+    if (!tgDeepLink) return
+    try {
+      await navigator.clipboard.writeText(tgDeepLink)
+      toast({
+        title: t("accountPage.copyToastSuccessTitle"),
+        description: t("accountPage.telegramLinkCopied"),
+        duration: 4000,
+      })
+    } catch {
+      toast({
+        variant: "destructive",
+        title: t("accountPage.copyToastErrorTitle"),
+        description: t("accountPage.telegramLinkCopyError"),
+        duration: 6000,
+      })
+    }
+  }
+
+  async function unlinkTelegramAccount() {
+    setTgMessage(null)
+    setTgError(null)
+    setTgUnlinking(true)
+    try {
+      const res = await fetch("/api/account/telegram-link", { method: "DELETE" })
+      const data = (await res.json()) as { ok?: boolean; error?: string }
+      if (!res.ok) {
+        setTgError(data.error ?? t("accountPage.telegramUnlinkError"))
+        return
+      }
+      setTgDeepLink("")
+      setTgMessage(t("accountPage.telegramUnlinked"))
+      await loadTelegramStatus()
+    } catch {
+      setTgError(t("accountPage.networkError"))
+    } finally {
+      setTgUnlinking(false)
     }
   }
 
@@ -623,6 +758,106 @@ export function AccountPage() {
               <p>{t("accountPage.voiceHaHint")}</p>
             </div>
           ) : null}
+        </section>
+
+        <section className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">{t("accountPage.sectionTelegram")}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("accountPage.telegramIntro")}</p>
+            </div>
+            <MessageCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          </div>
+
+          {tgMessage ? (
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">{tgMessage}</p>
+          ) : null}
+          {tgError ? <p className="text-sm text-destructive">{tgError}</p> : null}
+
+          <div className="rounded-md border border-border/80 bg-muted/20 p-3">
+            {tgLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("authPages.loading")}
+              </div>
+            ) : (
+              <div className="space-y-2 text-sm">
+                {tgStatus?.linked && tgStatus.telegramHint ? (
+                  <p>
+                    {t("accountPage.telegramLinked", { hint: tgStatus.telegramHint })}
+                  </p>
+                ) : (
+                  <p>{t("accountPage.telegramNotLinked")}</p>
+                )}
+                {!tgStatus?.botConfigured ? (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    {t("accountPage.telegramBotMissing")}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          {tgDeepLink ? (
+            <div className="space-y-2">
+              <Label htmlFor="tg-deep-link">{t("accountPage.telegramCopyLink")}</Label>
+              <Input id="tg-deep-link" value={tgDeepLink} readOnly className="font-mono text-xs" />
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={tgLoading}
+              onClick={() => void loadTelegramStatus()}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${tgLoading ? "animate-spin" : ""}`}
+              />
+              {t("accountPage.telegramRefreshStatus")}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!tgStatus?.botConfigured || tgGenerating}
+              onClick={() => void generateTelegramLink()}
+            >
+              {tgGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("authPages.loading")}
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  {t("accountPage.telegramGenerate")}
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!tgDeepLink}
+              onClick={() => void copyTelegramDeepLink()}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              {t("accountPage.telegramCopyLink")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!tgStatus?.linked || tgUnlinking}
+              onClick={() => void unlinkTelegramAccount()}
+            >
+              {tgUnlinking ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              {t("accountPage.telegramUnlink")}
+            </Button>
+          </div>
         </section>
 
         <Separator />

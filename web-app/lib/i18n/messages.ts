@@ -402,6 +402,24 @@ export const enMessages = {
     voiceHaHint:
       "After pasting into configuration.yaml or a package, replace YOUR_VOICE_TOKEN and media_player entity, then reload YAML.",
     voiceLastUsedSub: "When Pulse last responded to voice (webhook or JSON report).",
+    sectionTelegram: "Telegram bot",
+    telegramIntro:
+      "One bot for all accounts: generate a link, open it in Telegram, and press Start (Telegram sends a hidden token with /start). Then refresh status here or revisit this tab. Any message in the bot returns your portfolio; /unlink revokes the link.",
+    telegramLinked: "Telegram linked (ID ends with {hint}).",
+    telegramNotLinked: "Telegram not linked.",
+    telegramBotMissing:
+      "Set TELEGRAM_BOT_USERNAME on the server to enable deep links. Webhook: POST /api/v1/telegram/webhook with TELEGRAM_WEBHOOK_SECRET.",
+    telegramRefreshStatus: "Refresh status",
+    telegramGenerate: "Generate link",
+    telegramLinkReady: "Link ready. Open it in Telegram or copy it below.",
+    telegramCopyLink: "Copy link",
+    telegramLinkCopied: "Link copied to clipboard.",
+    telegramLinkCopyError: "Could not copy. Select and copy manually.",
+    telegramUnlink: "Unlink Telegram",
+    telegramUnlinked: "Telegram unlinked.",
+    telegramGenerateError: "Could not generate link.",
+    telegramLoadError: "Could not load Telegram status.",
+    telegramUnlinkError: "Could not unlink Telegram.",
     signOut: "Sign out",
   },
   alertsPage: {
@@ -838,6 +856,24 @@ export const esMessages = {
     voiceHaHint:
       "Tras pegar en configuration.yaml o un paquete, sustituye YOUR_VOICE_TOKEN y la entidad media_player; recarga YAML.",
     voiceLastUsedSub: "Momento en que Pulse respondió por última vez a voz o al reporte JSON.",
+    sectionTelegram: "Bot de Telegram",
+    telegramIntro:
+      "Un solo bot para todas las cuentas: genera un enlace, ábrelo en Telegram y pulsa Iniciar (Telegram envía un código oculto con /start). Luego actualiza el estado aquí o vuelve a esta pestaña. Cualquier mensaje en el bot devuelve tu portfolio; /desvincular revoca el enlace.",
+    telegramLinked: "Telegram vinculado (el ID termina en {hint}).",
+    telegramNotLinked: "Telegram sin vincular.",
+    telegramBotMissing:
+      "Define TELEGRAM_BOT_USERNAME en el servidor para activar enlaces. Webhook: POST /api/v1/telegram/webhook con TELEGRAM_WEBHOOK_SECRET.",
+    telegramRefreshStatus: "Actualizar estado",
+    telegramGenerate: "Generar enlace",
+    telegramLinkReady: "Enlace listo. Ábrelo en Telegram o cópialo abajo.",
+    telegramCopyLink: "Copiar enlace",
+    telegramLinkCopied: "Enlace copiado al portapapeles.",
+    telegramLinkCopyError: "No se pudo copiar. Selecciónalo y cópialo a mano.",
+    telegramUnlink: "Desvincular Telegram",
+    telegramUnlinked: "Telegram desvinculado.",
+    telegramGenerateError: "No se pudo generar el enlace.",
+    telegramLoadError: "No se pudo cargar el estado de Telegram.",
+    telegramUnlinkError: "No se pudo desvincular Telegram.",
     signOut: "Cerrar sesión",
   },
   alertsPage: {
