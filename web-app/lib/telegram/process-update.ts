@@ -12,8 +12,13 @@ import {
   buildVoiceTextFromReport,
 } from "@/lib/voice/build-voice-summary"
 import { hashVoiceToken } from "@/lib/voice/voice-user-token"
-import { tg, telegramUiLang, type TelegramUiLang } from "@/lib/telegram/copy"
+import { tg, telegramBotBasicLang, type TelegramUiLang } from "@/lib/telegram/copy"
 import { telegramSendMessage } from "@/lib/telegram/send-message"
+import {
+  telegramWelcomeAlreadyLinkedHtml,
+  telegramWelcomeLinkSuccessHtml,
+  telegramWelcomeNeedLinkHtml,
+} from "@/lib/telegram/welcome-html"
 
 export type ParsedTelegramMessage = {
   chatId: number
@@ -62,7 +67,7 @@ export function reportCommandLang(text: string): TelegramUiLang | null {
 }
 
 async function reply(
-  lang: ReturnType<typeof telegramUiLang>,
+  lang: TelegramUiLang,
   chatId: number,
   text: string,
 ): Promise<void> {
@@ -77,11 +82,21 @@ async function reply(
   }
 }
 
+async function replyHtml(chatId: number, html: string): Promise<void> {
+  const sent = await telegramSendMessage(chatId, html, { parseMode: "HTML" })
+  if (!sent.ok) {
+    console.error("[telegram] replyHtml sendMessage failed", {
+      chatId,
+      description: sent.description,
+    })
+  }
+}
+
 async function redeemLinkCode(
   rawToken: string,
   telegramUserId: number,
   chatId: number,
-  lang: ReturnType<typeof telegramUiLang>,
+  lang: TelegramUiLang,
 ): Promise<void> {
   const tokenHash = hashVoiceToken(rawToken.trim())
   await connectDB()
@@ -118,7 +133,7 @@ async function redeemLinkCode(
       { _id: code._id },
       { $set: { usedAt: new Date() } },
     )
-    await reply(lang, chatId, tg(lang, "linkSuccess"))
+    await replyHtml(chatId, telegramWelcomeLinkSuccessHtml())
   } catch (e) {
     console.error("[telegram] redeem link", e)
     await reply(lang, chatId, tg(lang, "linkSaveFailed"))
@@ -128,23 +143,23 @@ async function redeemLinkCode(
 async function handleStartWithoutToken(
   telegramUserId: number,
   chatId: number,
-  lang: ReturnType<typeof telegramUiLang>,
+  lang: TelegramUiLang,
 ): Promise<void> {
   await connectDB()
   const row = await TelegramIntegrationModel.findOne({
     telegramUserId: String(telegramUserId),
   }).lean()
   if (row) {
-    await reply(lang, chatId, tg(lang, "startAlreadyLinked"))
+    await replyHtml(chatId, telegramWelcomeAlreadyLinkedHtml())
   } else {
-    await reply(lang, chatId, tg(lang, "startNeedLink"))
+    await replyHtml(chatId, telegramWelcomeNeedLinkHtml())
   }
 }
 
 async function unlinkTelegram(
   telegramUserId: number,
   chatId: number,
-  lang: ReturnType<typeof telegramUiLang>,
+  lang: TelegramUiLang,
 ): Promise<void> {
   await connectDB()
   const r = await TelegramIntegrationModel.deleteOne({
@@ -195,7 +210,7 @@ export async function processTelegramUpdate(update: unknown): Promise<void> {
   const msg = extractTelegramMessage(update)
   if (!msg) return
 
-  const lang = telegramUiLang(msg.languageCode)
+  const lang = telegramBotBasicLang()
   const { chatId, telegramUserId, text } = msg
 
   const startMatch = /^\/start(?:\s+(\S+))?$/i.exec(text)

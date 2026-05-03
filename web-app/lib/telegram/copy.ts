@@ -4,15 +4,17 @@ export function telegramUiLang(languageCode?: string): TelegramUiLang {
   return languageCode?.toLowerCase().startsWith("es") ? "es" : "en"
 }
 
+/** Fixed language for standard bot replies (link, errors, help). Portfolio body still follows `state` vs `estado`. */
+export function telegramBotBasicLang(): TelegramUiLang {
+  return "en"
+}
+
 const COPY: Record<
   TelegramUiLang,
   Record<
     | "linkInvalid"
     | "linkSaveFailed"
     | "linkTelegramTaken"
-    | "linkSuccess"
-    | "startAlreadyLinked"
-    | "startNeedLink"
     | "unlinkDone"
     | "unlinkNone"
     | "portfolioNotLinked"
@@ -28,12 +30,6 @@ const COPY: Record<
       "No se pudo completar el vínculo. Inténtalo de nuevo o genera otro enlace desde el panel.",
     linkTelegramTaken:
       "Esta cuenta de Telegram ya está vinculada a otro usuario de Pulse. Desvincula desde la otra cuenta o contacta soporte.",
-    linkSuccess:
-      "Listo: tu Telegram quedó vinculado a tu cuenta Pulse. Escribe «estado» (informe en español) o «state» (en inglés). /desvincular para revocar.",
-    startAlreadyLinked:
-      "Ya tienes Telegram vinculado a Pulse. Envía «estado» o «state» para el resumen, o /desvincular para desconectar.",
-    startNeedLink:
-      "Aún no hay vínculo. Inicia sesión en el panel web → Cuenta → Telegram y pulsa «Generar enlace».",
     unlinkDone: "He quitado el vínculo entre Telegram y Pulse. Puedes generar un enlace nuevo cuando quieras.",
     unlinkNone: "No había ningún vínculo activo para esta cuenta de Telegram.",
     portfolioNotLinked:
@@ -50,12 +46,6 @@ const COPY: Record<
       "Could not complete the link. Try again or generate a new link from the web app.",
     linkTelegramTaken:
       "This Telegram account is already linked to another Pulse user. Unlink from the other account or contact support.",
-    linkSuccess:
-      "Done: Telegram is linked to your Pulse account. Send «state» (English report) or «estado» (Spanish). /unlink to revoke.",
-    startAlreadyLinked:
-      "Telegram is already linked to Pulse. Send «state» or «estado» for the summary, or /unlink to disconnect.",
-    startNeedLink:
-      "No link yet. Sign in on the web app → Account → Telegram and tap “Generate link”.",
     unlinkDone: "Telegram and Pulse are no longer linked. You can generate a new link anytime.",
     unlinkNone: "There was no active Telegram link for this account.",
     portfolioNotLinked:

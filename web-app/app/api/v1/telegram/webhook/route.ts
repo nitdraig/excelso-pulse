@@ -10,7 +10,7 @@ import {
   extractTelegramMessage,
   processTelegramUpdate,
 } from "@/lib/telegram/process-update"
-import { tg, telegramUiLang } from "@/lib/telegram/copy"
+import { tg, telegramBotBasicLang } from "@/lib/telegram/copy"
 import { telegramSendMessage } from "@/lib/telegram/send-message"
 
 /** Ayuda rápida si abres la URL en el navegador; Telegram solo usa POST. */
@@ -107,8 +107,7 @@ export async function POST(request: Request) {
   )
   if (!rl.ok) {
     if (msg) {
-      const lang = telegramUiLang(msg.languageCode)
-      const text = tg(lang, "rateLimited")
+      const text = tg(telegramBotBasicLang(), "rateLimited")
       await telegramSendMessage(msg.chatId, text)
     }
     return NextResponse.json({ ok: true })

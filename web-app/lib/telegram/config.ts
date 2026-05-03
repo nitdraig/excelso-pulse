@@ -32,3 +32,22 @@ export function getTelegramWebhookRateWindowMs(): number {
   const n = Number(process.env.TELEGRAM_WEBHOOK_RATE_WINDOW_MS)
   return Number.isFinite(n) && n > 0 ? n : 60_000
 }
+
+/** Sitio oficial (enlaces «Excelso» en mensajes HTML del bot). */
+export function getExcelsoOfficialSiteUrl(): string {
+  const u = (process.env.EXCELSO_OFFICIAL_SITE_URL ?? "https://excelso.xyz").trim()
+  return u.replace(/\/$/, "")
+}
+
+/**
+ * URL pública del panel en mensajes del bot (enlaces HTML).
+ * Por defecto `https://pulse.excelso.xyz` (no usa `AUTH_URL`, para no inyectar localhost en Telegram).
+ */
+export function getPulseAppPublicUrl(): string {
+  const u = (
+    process.env.TELEGRAM_PULSE_PUBLIC_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "https://pulse.excelso.xyz"
+  ).trim()
+  return u.replace(/\/$/, "")
+}

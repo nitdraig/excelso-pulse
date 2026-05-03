@@ -4,12 +4,18 @@ const TELEGRAM_API = "https://api.telegram.org"
 
 export type TelegramSendResult = { ok: true } | { ok: false; description?: string }
 
+export type TelegramSendMessageOptions = {
+  /** Solo para textos generados por nosotros (HTML seguro). El resto va sin parse_mode. */
+  parseMode?: "HTML"
+}
+
 /**
- * Envía un mensaje de texto (sin parse_mode para evitar conflictos con caracteres especiales).
+ * Envía texto al chat. Por defecto sin parse_mode (contenido agregado / usuario).
  */
 export async function telegramSendMessage(
   chatId: number,
   text: string,
+  options?: TelegramSendMessageOptions,
 ): Promise<TelegramSendResult> {
   const token = getTelegramBotToken()
   if (!token) {
@@ -20,15 +26,20 @@ export async function telegramSendMessage(
   const safeText =
     text.length > 4096 ? `${text.slice(0, 4090).trimEnd()}…` : text
 
+  const body: Record<string, unknown> = {
+    chat_id: chatId,
+    text: safeText,
+    disable_web_page_preview: true,
+  }
+  if (options?.parseMode === "HTML") {
+    body.parse_mode = "HTML"
+  }
+
   const url = `${TELEGRAM_API}/bot${encodeURIComponent(token)}/sendMessage`
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: safeText,
-      disable_web_page_preview: true,
-    }),
+    body: JSON.stringify(body),
   })
 
   const data = (await res.json().catch(() => ({}))) as {

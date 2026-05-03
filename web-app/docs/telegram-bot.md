@@ -24,6 +24,10 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
   -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
 ```
 
+## Mensaje de bienvenida (`/start`, enlace)
+
+Tras `/start` o un enlace correcto, el bot envía un bloque **HTML** (parse_mode `HTML`) con enlace clicable a **Excelso** (`EXCELSO_OFFICIAL_SITE_URL`, por defecto `https://excelso.xyz`), enlace al panel **Pulse** (`TELEGRAM_PULSE_PUBLIC_URL` o `NEXT_PUBLIC_APP_URL`, por defecto `https://pulse.excelso.xyz`) y mini guía (`state` / `estado` / `/unlink`).
+
 ## Flujo de usuario
 
 1. En **Cuenta → Telegram**, pulsa **Generar enlace** (sesión web).
@@ -32,7 +36,7 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
 4. Vuelve al panel y pulsa **Actualizar estado** (o cambia de pestaña y vuelve): la página no sondea sola, pero al recuperar el foco se vuelve a pedir el estado.
 5. Cualquier mensaje de texto en el bot (tras vincular) pide el resumen de tu portfolio.
 
-El informe de texto reutiliza las mismas reglas que la voz (`buildVoiceTextFromReport`), en español o inglés según `language_code` de Telegram.
+El informe de texto reutiliza las mismas reglas que la voz (`buildVoiceTextFromReport`): el cuerpo del resumen va en **inglés** con `state` o en **español** con `estado`. El resto de mensajes del bot (enlace, errores, ayuda) van en **inglés**.
 
 ## Comandos en el chat
 
@@ -42,7 +46,7 @@ El informe de texto reutiliza las mismas reglas que la voz (`buildVoiceTextFromR
 | `/start` sin haber abierto el enlace | Si ya estás vinculado, te lo indica; si no, pide generar el enlace en la web. |
 | `state` o `/state` (solo eso, mayúsculas indistinto) | Resumen de portfolio **en inglés**. |
 | `estado` o `/estado` (solo eso) | Resumen de portfolio **en español**. |
-| Cualquier otro texto | Aviso de que no es el comando correcto (texto según el idioma de Telegram). |
+| Cualquier otro texto | Aviso en **inglés** de que no es el comando correcto. |
 | `/desvincular` o `/unlink` | Quita el vínculo para ese usuario de Telegram. |
 
 ## Si el bot no responde (silencio total)
