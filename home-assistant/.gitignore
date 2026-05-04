@@ -1,0 +1,19 @@
+# Ignorar base de datos de historial
+*.db
+*.db-shm
+*.db-wal
+
+# Ignorar archivos de log y temporales
+*.log
+.DS_Store
+__pycache__/
+
+# Ignorar la carpeta de configuración interna
+.storage/
+
+# Ignorar componentes personalizados (HACS se encarga de esto)
+custom_components/
+
+# ¡NO SUBIR SECRETS! 
+# Solo subiremos secrets.yaml.example (ver abajo)
+secrets.yaml

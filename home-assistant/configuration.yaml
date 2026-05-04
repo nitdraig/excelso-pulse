@@ -1,0 +1,34 @@
+homeassistant:
+  name: Excelso Pulse Home
+  time_zone: America/Argentina/Buenos_Aires
+  country: AR
+  unit_system: metric
+  currency: ARS
+
+default_config:
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+    - !secret reverse_proxy_ip
+
+api:
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Punto de integración para que Home Assistant pueda llamar webhooks de la web-app.
+rest_command:
+  pulse_webhook:
+    url: !secret pulse_webhook_url
+    method: POST
+    headers:
+      Authorization: !secret pulse_webhook_authorization
+      Content-Type: application/json
+    payload: "{{ payload }}"
