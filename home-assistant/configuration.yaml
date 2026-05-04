@@ -15,7 +15,9 @@ http:
   trusted_proxies:
     - 127.0.0.1
     - ::1
-    # Dokploy/Swarm suele usar 10.x.x.x hacia HA; docker bridge suele usar 172.16–172.31.
+    # Proxy inmediato (según tus logs Dokploy/Swarm): debe coincidir o estar en una red listada debajo.
+    - 10.0.1.9
+    # Rangos típicos: overlay 10.x y bridges Docker 172.16–172.31 (máscara en dirección de red, no host).
     - 10.0.0.0/8
     - 172.16.0.0/12
 
