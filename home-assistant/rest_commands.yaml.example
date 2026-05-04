@@ -1,0 +1,8 @@
+# Copiar a rest_commands.yaml y definir pulse_webhook_url / pulse_webhook_authorization en /config/secrets.yaml
+pulse_webhook:
+  url: !secret pulse_webhook_url
+  method: POST
+  headers:
+    Authorization: !secret pulse_webhook_authorization
+    Content-Type: application/json
+  payload: "{{ payload }}"

@@ -27,12 +27,5 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
-# Punto de integración para que Home Assistant pueda llamar webhooks de la web-app.
-rest_command:
-  pulse_webhook:
-    url: !secret pulse_webhook_url
-    method: POST
-    headers:
-      Authorization: !secret pulse_webhook_authorization
-      Content-Type: application/json
-    payload: "{{ payload }}"
+# Webhook Pulse: contenido opcional en rest_commands.yaml (sin !secret hasta que configures secrets en el volumen).
+rest_command: !include rest_commands.yaml

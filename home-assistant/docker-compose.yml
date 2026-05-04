@@ -18,4 +18,5 @@ services:
       - ./automations.yaml:/config/automations.yaml
       - ./scripts.yaml:/config/scripts.yaml
       - ./scenes.yaml:/config/scenes.yaml
+      - ./rest_commands.yaml:/config/rest_commands.yaml
       - ./themes:/config/themes
