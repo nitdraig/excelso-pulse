@@ -15,7 +15,9 @@ http:
   trusted_proxies:
     - 127.0.0.1
     - ::1
-    - !secret reverse_proxy_ip
+    # Dokploy/Swarm suele usar 10.x.x.x hacia HA; docker bridge suele usar 172.16–172.31.
+    - 10.0.0.0/8
+    - 172.16.0.0/12
 
 api:
 
