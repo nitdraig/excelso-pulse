@@ -11,3 +11,11 @@ services:
     volumes:
       - /var/lib/dokploy/homeassistant_config:/config
       - /etc/localtime:/etc/localtime:ro
+      # Obliga a cargar estos YAML desde el repo (Dokploy: rutas relativas a esta carpeta).
+      # Así sí aplica use_x_forwarded_for + trusted_proxies tras redeploy.
+      # secrets.yaml NO se monta aquí: queda sólo en el volumen persistente (/config/secrets.yaml).
+      - ./configuration.yaml:/config/configuration.yaml
+      - ./automations.yaml:/config/automations.yaml
+      - ./scripts.yaml:/config/scripts.yaml
+      - ./scenes.yaml:/config/scenes.yaml
+      - ./themes:/config/themes
