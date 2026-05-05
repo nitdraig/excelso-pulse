@@ -13,7 +13,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
       # Obliga a cargar estos YAML desde el repo (Dokploy: rutas relativas a esta carpeta).
       # Así sí aplica use_x_forwarded_for + trusted_proxies tras redeploy.
-      # secrets.yaml NO se monta aquí: queda sólo en el volumen persistente (/config/secrets.yaml).
+      # secrets.yaml y service_account.json (Google Assistant) NO van desde el repo:
+      # colócalos en el volumen persistente: /config/ en el contenedor = /var/lib/dokploy/homeassistant_config/ en el VPS.
+      # Ver GOOGLE-ASSISTANT-SERVICE-ACCOUNT.es.md
       - ./configuration.yaml:/config/configuration.yaml
       - ./automations.yaml:/config/automations.yaml
       - ./scripts.yaml:/config/scripts.yaml

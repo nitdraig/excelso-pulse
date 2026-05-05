@@ -28,7 +28,7 @@ export const enMessages = {
     card3Title: "Public docs",
     card3Body:
       "Learn the pulse contract and how to wire excelso-pulse-express without signing in.",
-    footer: "© Excelso Pulse — MIT",
+    footer: "©Excelso Pulse — MIT",
   },
   header: {
     title: "Excelso Pulse",
@@ -81,7 +81,8 @@ export const enMessages = {
     unknown: "No AI summary text was returned for this source.",
     missing_secret:
       "The Hub has no Bearer token for this source. Set the secret env key on the server or save a token in the project.",
-    timeout: "The pulse request timed out. Check that the backend URL is reachable from Pulse.",
+    timeout:
+      "The pulse request timed out. Check that the backend URL is reachable from Pulse.",
     aborted: "The pulse request was cancelled (round timeout or navigation).",
     http_error:
       "The saved pulse URL returned an HTTP error. Pulse Hub only calls that URL; check the path, Bearer token, and that server’s logs.",
@@ -378,7 +379,8 @@ export const enMessages = {
       "This rotates the existing token if present. Update Dialogflow header with the new value.",
     voiceGenerateConfirm: "Generate token",
     voiceTokenLabel: "Voice token",
-    voiceTokenHint: "Copy and store it now. It will not be shown again in plain text.",
+    voiceTokenHint:
+      "Copy and store it now. It will not be shown again in plain text.",
     copyToastSuccessTitle: "Copied",
     copyToastErrorTitle: "Could not copy",
     voiceCopy: "Copy token",
@@ -401,7 +403,8 @@ export const enMessages = {
     voiceHaCopied: "Home Assistant YAML copied to clipboard.",
     voiceHaHint:
       "After pasting into configuration.yaml or a package, replace YOUR_VOICE_TOKEN and media_player entity, then reload YAML.",
-    voiceLastUsedSub: "When Pulse last responded to voice (webhook or JSON report).",
+    voiceLastUsedSub:
+      "When Pulse last responded to voice (webhook or JSON report).",
     sectionTelegram: "Telegram bot",
     telegramIntro:
       "One bot for all accounts: generate a link, open it in Telegram, and press Start (Telegram sends a hidden token with /start). Then refresh status here or revisit this tab. In the bot, send «state» for the English report or «estado» for Spanish; /unlink revokes the link.",
@@ -481,7 +484,7 @@ export const esMessages = {
     card3Title: "Docs públicas",
     card3Body:
       "Contrato pulse y cómo cablear excelso-pulse-express sin iniciar sesión.",
-    footer: "© Excelso Pulse — MIT",
+    footer: "©Excelso Pulse — MIT",
   },
   header: {
     title: "Excelso Pulse",
@@ -832,7 +835,8 @@ export const esMessages = {
       "Esto rota el token existente si ya había uno. Actualiza la cabecera en Dialogflow con el nuevo valor.",
     voiceGenerateConfirm: "Generar token",
     voiceTokenLabel: "Token de voz",
-    voiceTokenHint: "Cópialo y guárdalo ahora. No volverá a mostrarse en texto plano.",
+    voiceTokenHint:
+      "Cópialo y guárdalo ahora. No volverá a mostrarse en texto plano.",
     copyToastSuccessTitle: "Copiado",
     copyToastErrorTitle: "No se pudo copiar",
     voiceCopy: "Copiar token",
@@ -855,7 +859,8 @@ export const esMessages = {
     voiceHaCopied: "YAML de Home Assistant copiado al portapapeles.",
     voiceHaHint:
       "Tras pegar en configuration.yaml o un paquete, sustituye YOUR_VOICE_TOKEN y la entidad media_player; recarga YAML.",
-    voiceLastUsedSub: "Momento en que Pulse respondió por última vez a voz o al reporte JSON.",
+    voiceLastUsedSub:
+      "Momento en que Pulse respondió por última vez a voz o al reporte JSON.",
     sectionTelegram: "Bot de Telegram",
     telegramIntro:
       "Un solo bot para todas las cuentas: genera un enlace, ábrelo en Telegram y pulsa Iniciar (Telegram envía un código oculto con /start). Luego actualiza el estado aquí o vuelve a esta pestaña. En el bot, escribe «estado» para el informe en español o «state» en inglés; /desvincular revoca el enlace.",

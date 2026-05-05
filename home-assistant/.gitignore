@@ -17,3 +17,7 @@ custom_components/
 # ¡NO SUBIR SECRETS! 
 # Solo subiremos secrets.yaml.example (ver abajo)
 secrets.yaml
+
+# Cuenta de servicio Google (Google Assistant manual). Ver GOOGLE-ASSISTANT-SERVICE-ACCOUNT.es.md
+service_account.json
+*-service-account*.json

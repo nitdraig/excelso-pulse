@@ -6,6 +6,7 @@ import { BrandMark } from "@/components/brand-mark"
 import { useTranslation } from "@/components/i18n-provider"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export function LandingView() {
   const { t } = useTranslation()
@@ -86,9 +87,29 @@ export function LandingView() {
       </main>
 
       <footer className="relative z-10 border-t border-border/60 bg-muted/20 py-8 text-center text-xs text-muted-foreground">
-        <p>{t("landing.footer")}</p>
-        <span className="text-xs text-muted-foreground my-4">Powered by <Link href="https://excelso.xyz" className="text-primary hover:underline">Excelso</Link></span>
-      </footer>
+        <div className="flex flex-col lg:items-center lg:text-center">
+          <p className="mt-4 lg:mt-12 lg:text-center">
+            {t("landing.footer")} {new Date().getFullYear()}
+          </p>
+          <p className="text-sm text-neutral-500">
+            Powered by <a
+              className="text-[#6d0000]"
+              href="https://excelso.xyz"
+              target="_blank"
+              rel="noopener noreferrer">Excelso</a
+            >
+          </p>
+          <a href="https://excelso.xyz" target="_blank" rel="noopener noreferrer">
+            <Image
+              className="pt-4 w-auto h-10"
+              src="/icons/exo.png"
+              width={100}
+              height={100}
+              alt="Excelso logo"
+              loading="lazy"
+            />
+          </a>
+        </div> </footer>
     </div>
   )
 }
